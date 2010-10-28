@@ -46,7 +46,7 @@ public abstract class MarketAgent extends Agent {
 	 */
 	static class MarketAgentBuilder implements Serializable {
 		/**
-		 * Default serial ID
+		 * Default serial version ID
 		 */
 		private static final long serialVersionUID = 1L;
 

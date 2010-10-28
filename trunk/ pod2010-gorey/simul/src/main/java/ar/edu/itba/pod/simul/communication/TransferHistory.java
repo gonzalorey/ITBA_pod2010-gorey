@@ -15,7 +15,7 @@ import com.google.common.base.Preconditions;
  */
 public class TransferHistory implements Serializable {
 	/**
-	 * Default serial ID
+	 * Default serial version ID
 	 */
 	private static final long serialVersionUID = 1L;
 	private final List<TransferHistoryItem> historyItems;

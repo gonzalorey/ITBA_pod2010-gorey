@@ -11,7 +11,7 @@ import ar.edu.itba.pod.thread.doc.Immutable;
 @Immutable
 public class Resource implements Serializable {
 	/**
-	 * Default serial ID
+	 * Default serial version ID
 	 */
 	private static final long serialVersionUID = 1L;
 	private final String category;

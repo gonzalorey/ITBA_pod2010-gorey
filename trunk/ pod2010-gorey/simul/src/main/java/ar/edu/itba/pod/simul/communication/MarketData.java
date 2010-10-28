@@ -17,7 +17,7 @@ import com.google.common.collect.Multiset;
  */
 public class MarketData implements Serializable {
 	/**
-	 * Default serial ID
+	 * Degfault serial version ID
 	 */
 	private static final long serialVersionUID = 1L;
 	private Multiset<Resource> buying;

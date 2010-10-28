@@ -15,7 +15,7 @@ import java.io.Serializable;
  */
 public class AgentState implements Serializable {
 	/**
-	 * Default serial ID
+	 * Default serial version ID
 	 */
 	private static final long serialVersionUID = 1L;
 	private final String name;

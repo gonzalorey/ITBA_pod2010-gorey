@@ -10,9 +10,10 @@ import java.io.Serializable;
  */
 public class NodeAgentLoad implements Serializable {
 	/**
-	 * Default serial ID
+	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
 	private String nodeId;
 	private int numberOfAgents;
 
