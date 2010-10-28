@@ -16,7 +16,7 @@ import com.google.common.base.Preconditions;
 public class Message implements Serializable, Comparable<Message> {
 
 	/**
-	 * Default serial ID
+	 * Degfault serial version ID
 	 */
 	private static final long serialVersionUID = 1L;
 	private final MessageType type;

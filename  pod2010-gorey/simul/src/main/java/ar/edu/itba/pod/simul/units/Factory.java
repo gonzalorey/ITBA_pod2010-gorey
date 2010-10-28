@@ -99,7 +99,7 @@ public class Factory extends MarketAgent {
 	
 	public static class FactoryBuilder extends MarketAgentBuilder {
 		/**
-		 * Default serial ID
+		 * Default serial version ID
 		 */
 		private static final long serialVersionUID = 1L;
 		private Multiset<Resource> requirements = HashMultiset.create();
@@ -217,7 +217,7 @@ public class Factory extends MarketAgent {
 	
 	public static class FactoryDescriptor implements AgentDescriptor {
 		/**
-		 * Default serial ID
+		 * Default serial version ID
 		 */
 		private static final long serialVersionUID = 1L;
 		private Multiset<Resource> rawResources;

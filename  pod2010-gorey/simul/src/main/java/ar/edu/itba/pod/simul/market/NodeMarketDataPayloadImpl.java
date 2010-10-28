@@ -11,7 +11,7 @@ import ar.edu.itba.pod.simul.communication.payload.NodeMarketDataPayload;
  */
 public class NodeMarketDataPayloadImpl implements NodeMarketDataPayload {
 	/**
-	 * Default serial ID
+	 * Default serial version ID
 	 */
 	private static final long serialVersionUID = 1L;
 	private final MarketData marketData;

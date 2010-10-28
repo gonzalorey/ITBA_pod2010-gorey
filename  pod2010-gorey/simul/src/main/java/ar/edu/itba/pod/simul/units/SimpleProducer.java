@@ -91,7 +91,7 @@ public class SimpleProducer extends MarketAgent implements ResourceStock {
 
 	public static class SimpleProducerBuilder extends MarketAgentBuilder {
 		/**
-		 * Default serial ID
+		 * Default serial version ID
 		 */
 		private static final long serialVersionUID = 1L;
 		private Resource resource;
@@ -123,7 +123,7 @@ public class SimpleProducer extends MarketAgent implements ResourceStock {
 	
 	public static class SimpleProducerDescriptor implements AgentDescriptor {
 		/**
-		 * Default serial ID
+		 * Default serial version ID
 		 */
 		private static final long serialVersionUID = 1L;
 		private final AtomicInteger amount;

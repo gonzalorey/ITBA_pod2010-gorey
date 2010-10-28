@@ -16,7 +16,7 @@ import ar.edu.itba.pod.simul.market.Resource;
  */
 public class TransferHistoryItem implements Serializable {
 	/**
-	 * Default serial ID
+	 * Default serial version ID
 	 */
 	private static final long serialVersionUID = 1L;
 	private String sourceAgentName;
