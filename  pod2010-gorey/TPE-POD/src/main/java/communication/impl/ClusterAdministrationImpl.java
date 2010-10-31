@@ -73,7 +73,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		//TODO connect to group
 		// como deberia ser? deberia llamar al connectionManager(initialNode) y luego a su cluster administrator y luego
 		//pedirle que me haga un addNewNode?
-		// o simplemente setearle el groupId del initialNode -> como obtengo su groupId
+		// o simplemente setearle el groupId del initialNode -> como obtengo su groupId, igual que en addNewNode?
 	}
 	
 	@Override
@@ -93,7 +93,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	}
 
 	@Override
-	public void disconnectFromGroup(String arg0) throws RemoteException {
+	public void disconnectFromGroup(String nodeId) throws RemoteException {
 		// TODO Auto-generated method stub
 	}
 

@@ -5,6 +5,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import communication.interfaces.RegistryPort;
+
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
 import ar.edu.itba.pod.simul.communication.ClusterCommunication;
 import ar.edu.itba.pod.simul.communication.ConnectionManager;
@@ -13,24 +15,15 @@ import ar.edu.itba.pod.simul.communication.SimulationCommunication;
 import ar.edu.itba.pod.simul.communication.ThreePhaseCommit;
 import ar.edu.itba.pod.simul.communication.Transactionable;
 
-public class ConnectionManagerImpl implements ConnectionManager, ReferenceName {
+public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, RegistryPort {
 	
-	public ConnectionManagerImpl(){
-		// TODO Miedo porq no se que meter aca... :(
-	}
-
-	@Override
-	public ClusterAdministration getClusterAdmimnistration() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	
 	@Override
 	public int getClusterPort() throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+		// return always the default port number
+		return DEFAULT_PORT_NUMBER;
 	}
-
+	
 	@Override
 	public ConnectionManager getConnectionManager(String nodeId) throws RemoteException {
 		
@@ -51,9 +44,15 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName {
 		
 		return connectionManager;
 	}
-
+	
 	@Override
 	public ClusterCommunication getGroupCommunication() throws RemoteException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ClusterAdministration getClusterAdmimnistration() throws RemoteException {
 		// TODO Auto-generated method stub
 		return null;
 	}
