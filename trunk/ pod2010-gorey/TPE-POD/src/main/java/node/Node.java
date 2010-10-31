@@ -7,18 +7,14 @@ import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import communication.impl.ConnectionManagerImpl;
-import communication.interfaces.RegistryPort;
 
 import ar.edu.itba.pod.simul.communication.ConnectionManager;
 import ar.edu.itba.pod.simul.communication.ReferenceName;
 
+import communication.impl.ConnectionManagerImpl;
+import communication.interfaces.RegistryPort;
+
 public class Node implements ReferenceName, RegistryPort{
-	
-	private CopyOnWriteArrayList<String> knownNodes;
-	private CopyOnWriteArrayList<String> 
 	
 	// connection data
 	private String dnsName;
