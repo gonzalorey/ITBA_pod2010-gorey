@@ -2,14 +2,23 @@ package node;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.rmi.AccessException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-public class Node {
+import communication.impl.ConnectionManagerImpl;
+import communication.interfaces.RegistryPort;
+
+import ar.edu.itba.pod.simul.communication.ConnectionManager;
+import ar.edu.itba.pod.simul.communication.ReferenceName;
+
+public class Node implements ReferenceName, RegistryPort{
 	
-	// hard-coded PORT
-	private final static int DEFAULT_PORT_NUMBER = 9999; //TODO
+	private CopyOnWriteArrayList<String> knownNodes;
+	private CopyOnWriteArrayList<String> 
 	
 	// connection data
 	private String dnsName;
@@ -34,7 +43,26 @@ public class Node {
 		// start the RMI Registry
 		Registry registry = startRMIRegistry();
 		
+		// create the connection manager
+		ConnectionManager connectionManager = new ConnectionManagerImpl();
 		
+		System.out.println("Connection Manager created successfully. Publishing it...");
+		
+		// publish the connection
+		try {
+			registry.bind(CONNECTION_MANAGER_NAME, connectionManager);
+		} catch (AccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (AlreadyBoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println("Connection Manager published successfully");
 		
 		System.out.println("Bye!");
 		return;
@@ -47,7 +75,7 @@ public class Node {
 		try {
 			// create the RMI Registry
 			registry = LocateRegistry.createRegistry(DEFAULT_PORT_NUMBER);
-			System.out.println("RMI Registry raised successfully!");
+			System.out.println("RMI Registry raised successfully");
 		} catch (RemoteException e) {
 			// aparently the rmiregistry was already instantiated
 			e.printStackTrace();
@@ -55,7 +83,7 @@ public class Node {
 			try {
 				// try to obtain the already created RMI Registry
 				registry = LocateRegistry.getRegistry();
-				System.out.println("RMI Registry joined successfully!");
+				System.out.println("RMI Registry joined successfully");
 			} catch (RemoteException e1) {
 				e1.printStackTrace();
 			}
