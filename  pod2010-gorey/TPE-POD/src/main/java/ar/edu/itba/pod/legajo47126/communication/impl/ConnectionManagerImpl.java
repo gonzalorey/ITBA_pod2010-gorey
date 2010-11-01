@@ -7,6 +7,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
 import ar.edu.itba.pod.legajo47126.node.Node;
@@ -30,7 +31,9 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 	// ClusterAdministration instance to handle the group connections
 	private ClusterAdministration clusterAdministration;
 	
-	private ConnectionManagerImpl(){
+	private ConnectionManagerImpl() throws RemoteException{
+		UnicastRemoteObject.exportObject(this, 0);
+		
 		// start the RMI Registry
 		registry = startRMIRegistry();
 		
@@ -53,7 +56,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		}
 	}
 	
-	public static synchronized ConnectionManagerImpl getInstance(){
+	public static synchronized ConnectionManagerImpl getInstance() throws RemoteException{
 		if(connectionManager == null)
 			ConnectionManagerImpl.connectionManager = new ConnectionManagerImpl();
 		

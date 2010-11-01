@@ -30,7 +30,14 @@ public class NodeManagement {
 		System.out.println("Node '" + localNode + "' started successfully");
 		
 		// create the connection manager
-		ConnectionManager connectionManager = ConnectionManagerImpl.getInstance();
+		ConnectionManager connectionManager;
+		try {
+			connectionManager = ConnectionManagerImpl.getInstance();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
 		
 		// something as not to get a warning...
 		try {
@@ -56,7 +63,7 @@ public class NodeManagement {
 	}
 	
 	// console commands
-	private enum Commands{HOST, PORT, EXIT, WRONG_COMMAND}
+	private enum Commands{CONNECT_GROUP, CREATE_GROUP, EXIT, WRONG_COMMAND}
 	
 	
 	public static void console(){
@@ -80,22 +87,37 @@ public class NodeManagement {
 			
 			// get the inserted command
 			Commands command;
-			if(line.startsWith("host "))
-				command = Commands.HOST;
-			else if(line.startsWith("port "))
-				command = Commands.PORT;
+			if(line.startsWith("connect "))
+				command = Commands.CONNECT_GROUP;
+			else if(line.startsWith("create "))
+				command = Commands.CREATE_GROUP;
 			else if(line.startsWith("exit"))
 				return;
 			else
 				command = Commands.WRONG_COMMAND;
 			
 			switch (command) {
-			case HOST:
-				System.out.println("HOST: " + line);
+			case CONNECT_GROUP:
+				try {
+					String nodeId = line.split(" ")[1];
+					System.out.println("Connecting to " + nodeId);
+					ConnectionManagerImpl.getInstance().getClusterAdmimnistration().connectToGroup(nodeId);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				break;
-	
-			case PORT:
-				System.out.println("PORT: " + line);
+				
+			case CREATE_GROUP:
+				try {
+					System.out.println("Creating group...");
+					ConnectionManagerImpl.getInstance().getClusterAdmimnistration().createGroup();
+					String groupId = ConnectionManagerImpl.getInstance().getClusterAdmimnistration().getGroupId();
+					System.out.println("Group " + groupId + " created successfully");
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				break;
 	
 			case EXIT:
