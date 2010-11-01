@@ -2,131 +2,101 @@ package node;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.rmi.AccessException;
-import java.rmi.AlreadyBoundException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 
 import ar.edu.itba.pod.simul.communication.ReferenceName;
 
-import communication.impl.ConnectionManagerImpl;
 import communication.interfaces.RegistryPort;
 
 public class Node implements ReferenceName, RegistryPort{
 	
 	// connection data
-	private String dnsName;
-	private InetAddress address;
-	private int port; 
+	private InetAddress inetAddress;
+	private int port;
 	
-	public static void main(String[] args) {
-		System.out.println("Starting the node...");
-		
-		// create the local node
-		Node localNode; 
-		try {
-			localNode = new Node();
-		} catch (UnknownHostException e) {
-			System.out.println("The local Node couldn't be started. Aborting execution");
-			e.printStackTrace();
-			return;
-		}
-		
-		System.out.println("Node '" + localNode.getDnsName() + "' started successfully");
-		
-		// start the RMI Registry
-		Registry registry = startRMIRegistry();
-		
-		// create the connection manager
-		ConnectionManagerImpl connectionManager = ConnectionManagerImpl.getInstance();
-		
-		System.out.println("Connection Manager created successfully. Publishing it...");
-		
-		// publish the connection
-		try {
-			registry.bind(CONNECTION_MANAGER_NAME, connectionManager);
-		} catch (AccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (AlreadyBoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		System.out.println("Connection Manager published successfully");
-		
-		System.out.println("Bye!");
-		return;
-	}
+	// node Id identifying the node
+	private String nodeId;
 	
-	public static Registry startRMIRegistry(){
-		// RMI Registry
-		Registry registry = null;
-		
-		try {
-			// create the RMI Registry
-			registry = LocateRegistry.createRegistry(DEFAULT_PORT_NUMBER);
-			System.out.println("RMI Registry raised successfully");
-		} catch (RemoteException e) {
-			// aparently the rmiregistry was already instantiated
-			e.printStackTrace();
-			
-			try {
-				// try to obtain the already created RMI Registry
-				registry = LocateRegistry.getRegistry();
-				System.out.println("RMI Registry joined successfully");
-			} catch (RemoteException e1) {
-				e1.printStackTrace();
-			}
-		}
-		
-		return registry;
-	}
-	
+	/**
+	 * A node identifying the local machine with a nodeId 'address:port'
+	 * 
+	 * @param address address of the host to use as entry point
+	 * @param port port to listen to incoming connections
+	 * @throws UnknownHostException
+	 */
 	public Node(String address, int port) throws UnknownHostException {
 		// get the address and port
-		this.address = InetAddress.getByName(address);
+		this.inetAddress = InetAddress.getByName(address);
 		this.port = port;
-
-		// set the domain name or the string representation of the address in case it's not available
-		this.dnsName = this.address.getHostName();
+		
+		// build the nodeId
+		this.nodeId = this.inetAddress.getHostAddress() + ":" + String.valueOf(this.port);
 	}
 	
+	/**
+	 * A node identifying the local machine with a nodeId 'address:port'.
+	 * It uses the local host and default RMI port 1099 to listen to incoming connections
+	 * @throws UnknownHostException
+	 */
 	public Node() throws UnknownHostException{
 		// get the address and port
-		this.address = InetAddress.getLocalHost();
+		this.inetAddress = InetAddress.getLocalHost();
 		this.port = DEFAULT_PORT_NUMBER;
 		
-		// set the domain name or the string representation of the address in case it's not available
-		this.dnsName = this.address.getHostName();
+		// build the nodeId
+		this.nodeId = this.inetAddress.getHostAddress() + ":" + String.valueOf(this.port);
+	}
+	
+	/**
+	 * NodeId representation of the node, formed by 'host_address:port'
+	 * 
+	 * @return String with the nodeId of the node
+	 */
+	public String getNodeId(){
+		return nodeId;
 	}
 
+	/**
+	 * Returns the InetAddress of the node
+	 * 
+	 * @return InetAddress object of the node
+	 */
+	public InetAddress getInetAddress() {
+		return inetAddress;
+	}
+	
+	/**
+	 * Gets the host name for this IP address.
+	 * 
+	 * @return the host name for this IP address, or if the operation is not allowed 
+	 * by the security check, the textual representation of the IP address.
+	 */
 	public String getDnsName() {
-		return dnsName;
+		return inetAddress.getHostName();
+	}
+	
+	/**
+	 * Returns the IP address string in textual presentation.
+	 * 
+	 * @return the raw IP address in a string format.
+	 */
+	public String getHostAddress(){
+		return inetAddress.getHostAddress();
 	}
 
-	public void setDnsName(String dnsName) {
-		this.dnsName = dnsName;
-	}
-
-	public InetAddress getAddress() {
-		return address;
-	}
-
-	public void setAddress(InetAddress address) {
-		this.address = address;
-	}
-
+	/**
+	 * Returns the port 
+	 * 
+	 * @return the port where the node will listen
+	 */
 	public int getPort() {
 		return port;
 	}
 
-	public void setPort(int port) {
-		this.port = port;
+	public static Node parse(String nodeId) throws NumberFormatException, UnknownHostException{
+		// split the node to get the address and the port
+		String[] aux = nodeId.split(":");
+		
+		// create and return the new instance of the node
+		return new Node(aux[0], Integer.valueOf(aux[1]));
 	}
-
 }
