@@ -10,7 +10,7 @@
 		<dependency>
 			<groupId>ar.edu.itba.pod</groupId>
 			<artifactId>simul</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.0.1</version>
 		</dependency>
 
 		<!-- jUnit para realizar testeos -->
@@ -23,7 +23,6 @@
 
 	</dependencies>
 	
-	<!-- 
 	<build>
 		<plugins>
 
@@ -35,7 +34,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>ar.edu.itba.pod.legajo47443.ClusterNode</mainClass>
+							<mainClass>ar.edu.itba.pod.legajo47126.node.NodeManagement</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
@@ -52,6 +51,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	-->
 	 
 </project>
