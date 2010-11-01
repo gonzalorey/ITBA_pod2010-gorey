@@ -17,6 +17,25 @@ import ar.edu.itba.pod.simul.communication.Transactionable;
 
 public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, RegistryPort {
 	
+	// singletone instance of the Connection Manger
+	private static ConnectionManagerImpl connectionManager = null;
+	
+	private ConnectionManagerImpl(){
+		// nothing here...
+	}
+	
+	public static synchronized ConnectionManagerImpl getInstance(){
+		if(connectionManager == null)
+			ConnectionManagerImpl.connectionManager = new ConnectionManagerImpl();
+		
+		return ConnectionManagerImpl.connectionManager;
+	}
+	
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		// it won't be cloned now either
+		throw new CloneNotSupportedException();
+	}
 	
 	@Override
 	public int getClusterPort() throws RemoteException {
