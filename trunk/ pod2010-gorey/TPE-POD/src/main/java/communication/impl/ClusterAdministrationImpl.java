@@ -11,7 +11,7 @@ import ar.edu.itba.pod.simul.communication.ClusterAdministration;
 
 public class ClusterAdministrationImpl implements ClusterAdministration, RegistryPort {
 
-	// node Id of the destination node
+	// node id of the destination node
 	private String nodeId;
 	
 	// name of the group that the node is connected to
@@ -70,10 +70,13 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 			// the destination node is the same as the initial node
 			throw new IllegalArgumentException();
 		
-		//TODO connect to group
-		// como deberia ser? deberia llamar al connectionManager(initialNode) y luego a su cluster administrator y luego
-		//pedirle que me haga un addNewNode?
-		// o simplemente setearle el groupId del initialNode -> como obtengo su groupId, igual que en addNewNode?
+		// set the destination node group as the one from the initial node
+		groupId = ConnectionManagerImpl.getInstance().getConnectionManager(initialNode).
+				getClusterAdmimnistration().getGroupId();
+		
+		// tell the initial node to add the destination node
+		ConnectionManagerImpl.getInstance().getConnectionManager(initialNode).
+		getClusterAdmimnistration().addNewNode(nodeId);
 	}
 	
 	@Override
@@ -83,10 +86,15 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 			// the destination node is not connected to a cluster
 			throw new IllegalStateException();
 		
-		//TODO get newNode.groupId()
-		// como? deberia obtener el connectionManager(newNode), luego su Cluster administrator y luego su groupId?
-		// pero ya tiene un grupo el nodo newNode? hizo primero un connectToGroup?
+		// get the new node group id
+		String newNodeGroupId = ConnectionManagerImpl.getInstance().getConnectionManager(newNode).
+							getClusterAdmimnistration().getGroupId();
 		
+		if(groupId != newNodeGroupId)
+			// the destination node's group id isn't the same as the newNode's group
+			throw new IllegalArgumentException();
+		
+		// add the node to the group nodes
 		groupNodes.add(newNode);
 		
 		return groupNodes;

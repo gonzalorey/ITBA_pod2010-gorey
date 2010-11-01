@@ -8,7 +8,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-import ar.edu.itba.pod.simul.communication.ConnectionManager;
 import ar.edu.itba.pod.simul.communication.ReferenceName;
 
 import communication.impl.ConnectionManagerImpl;
@@ -40,7 +39,7 @@ public class Node implements ReferenceName, RegistryPort{
 		Registry registry = startRMIRegistry();
 		
 		// create the connection manager
-		ConnectionManager connectionManager = new ConnectionManagerImpl();
+		ConnectionManagerImpl connectionManager = ConnectionManagerImpl.getInstance();
 		
 		System.out.println("Connection Manager created successfully. Publishing it...");
 		
@@ -129,6 +128,5 @@ public class Node implements ReferenceName, RegistryPort{
 	public void setPort(int port) {
 		this.port = port;
 	}
-	
-	
+
 }
