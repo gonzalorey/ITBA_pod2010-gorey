@@ -3,16 +3,18 @@ package communication.impl;
 import java.rmi.RemoteException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.joda.time.DateTime;
+import node.Node;
 
-import communication.interfaces.RegistryPort;
+import org.joda.time.DateTime;
 
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
 
+import communication.interfaces.RegistryPort;
+
 public class ClusterAdministrationImpl implements ClusterAdministration, RegistryPort {
 
-	// node id of the destination node
-	private String nodeId;
+	// destination node to be used during the cluster operations
+	private Node destinationNode = null;
 	
 	// name of the group that the node is connected to
 	private String groupId = null; 
@@ -20,16 +22,13 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	// collection with the nodes that belong to the group 
 	private CopyOnWriteArrayList<String> groupNodes = null;
 	
-	// port used by all the nodes belonging to the group
-	//private int clusterPort;
-	
 	/**
 	 * Instance the cluster administration with the destination node
 	 * 
-	 * @param nodeId node to be used as the destination to all the cluster administration operations
+	 * @param destinationNode node to be used as the destination to all the cluster operations
 	 */
-	public ClusterAdministrationImpl(String nodeId){
-		this.nodeId = nodeId;
+	public ClusterAdministrationImpl(Node destinationNode){
+		this.destinationNode = destinationNode;
 	}
 	
 	@Override
@@ -41,9 +40,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 			
 			// instantiate the list of group nodes with a concurrent array list
 			groupNodes = new CopyOnWriteArrayList<String>();
-			
-			// get the default port number
-			//clusterPort = DEFAULT_PORT_NUMBER;
+		
 		} else {
 			throw new IllegalStateException();
 		}
@@ -66,7 +63,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 			// the destination node already belongs to a group
 			throw new IllegalStateException();
 		
-		if(initialNode == nodeId)
+		if(initialNode == destinationNode.getNodeId())
 			// the destination node is the same as the initial node
 			throw new IllegalArgumentException();
 		
@@ -76,7 +73,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		
 		// tell the initial node to add the destination node
 		ConnectionManagerImpl.getInstance().getConnectionManager(initialNode).
-		getClusterAdmimnistration().addNewNode(nodeId);
+		getClusterAdmimnistration().addNewNode(destinationNode.getNodeId());
 	}
 	
 	@Override
