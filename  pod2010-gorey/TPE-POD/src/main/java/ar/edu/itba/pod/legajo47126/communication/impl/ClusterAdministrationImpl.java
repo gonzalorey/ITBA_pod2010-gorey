@@ -1,15 +1,13 @@
-package communication.impl;
+package ar.edu.itba.pod.legajo47126.communication.impl;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import node.Node;
-
 import org.joda.time.DateTime;
 
+import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
+import ar.edu.itba.pod.legajo47126.node.Node;
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
-
-import communication.interfaces.RegistryPort;
 
 public class ClusterAdministrationImpl implements ClusterAdministration, RegistryPort {
 

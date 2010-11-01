@@ -1,11 +1,11 @@
-package node;
+package ar.edu.itba.pod.legajo47126.node;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
 import ar.edu.itba.pod.simul.communication.ReferenceName;
 
-import communication.interfaces.RegistryPort;
 
 public class Node implements ReferenceName, RegistryPort{
 	
@@ -98,5 +98,10 @@ public class Node implements ReferenceName, RegistryPort{
 		
 		// create and return the new instance of the node
 		return new Node(aux[0], Integer.valueOf(aux[1]));
+	}
+	
+	@Override
+	public String toString() {
+		return nodeId;
 	}
 }

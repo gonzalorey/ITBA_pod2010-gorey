@@ -1,4 +1,4 @@
-package communication.interfaces;
+package ar.edu.itba.pod.legajo47126.communication.interfaces;
 
 /**
  * Constants used in the application.

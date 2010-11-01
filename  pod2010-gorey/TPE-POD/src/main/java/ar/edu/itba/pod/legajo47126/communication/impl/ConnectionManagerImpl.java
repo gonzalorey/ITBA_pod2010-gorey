@@ -1,4 +1,4 @@
-package communication.impl;
+package ar.edu.itba.pod.legajo47126.communication.impl;
 
 import java.net.UnknownHostException;
 import java.rmi.AccessException;
@@ -8,11 +8,9 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-import node.Node;
-import node.NodeManagement;
-
-import communication.interfaces.RegistryPort;
-
+import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
+import ar.edu.itba.pod.legajo47126.node.Node;
+import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
 import ar.edu.itba.pod.simul.communication.ClusterCommunication;
 import ar.edu.itba.pod.simul.communication.ConnectionManager;
@@ -42,6 +40,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		// publish the ConnectionManager
 		try {
 			registry.bind(CONNECTION_MANAGER_NAME, this);
+			System.out.println("Connection Manager binded successfully");
 		} catch (AccessException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -97,9 +96,12 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		// connect to the registry of the target node
 		Registry registry = LocateRegistry.getRegistry(targetNode.getHostAddress(), targetNode.getPort());
 		
+		System.out.println("Registry from " + targetNode + " obtained successfully");
+		
 		// obtain the reference to his ConnectionManager
 		try {
 			connectionManager = (ConnectionManager) registry.lookup(CONNECTION_MANAGER_NAME);
+			System.out.println("Connection Manager from " + targetNode + " obtained successfully");
 		} catch (NotBoundException e) {
 			// TODO log this one
 			e.printStackTrace();
