@@ -13,13 +13,22 @@
 			<version>0.0.1</version>
 		</dependency>
 
-		<!-- jUnit para realizar testeos -->
+		<!-- jUnit to test as little as I can -->
+		<!-- 
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.8.1</version>
 			<scope>test</scope>
 		</dependency>
+		-->
+				
+		<!-- log4j to log as sweet as possible -->
+		<dependency>
+			<groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+        	<version>1.2.16</version>
+        </dependency>
 
 	</dependencies>
 	
