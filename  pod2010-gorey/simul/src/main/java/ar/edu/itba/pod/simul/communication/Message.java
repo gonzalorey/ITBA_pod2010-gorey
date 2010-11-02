@@ -16,7 +16,7 @@ import com.google.common.base.Preconditions;
 public class Message implements Serializable, Comparable<Message> {
 
 	/**
-	 * Degfault serial version ID
+	 * Default serial version ID
 	 */
 	private static final long serialVersionUID = 1L;
 	private final MessageType type;
@@ -103,5 +103,10 @@ public class Message implements Serializable, Comparable<Message> {
 		} else {
 			return getTimeStamp().compareTo(other.getTimeStamp());
 		}
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("Message created on %d from node %s and type %s", this.timeStamp, this.nodeId, this.type);
 	}
 }
