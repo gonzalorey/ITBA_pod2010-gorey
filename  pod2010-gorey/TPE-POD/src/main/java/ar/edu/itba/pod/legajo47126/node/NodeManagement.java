@@ -6,25 +6,34 @@ import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
+
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
 import ar.edu.itba.pod.simul.communication.ConnectionManager;
-
 
 public class NodeManagement {
 	
 	// instance of the local machine node
 	private static Node localNode;
-
+	
+	// instance of the log4j logger
+	private static Logger logger = Logger.getLogger(NodeManagement.class);
+	
 	public static void main(String[] args) {
-		System.out.println("Starting the node...");
+		
+		// set the basic configuration for the logger, so everything goes to stdout
+		BasicConfigurator.configure();
+		
+		logger.info("Starting the node...");
 		
 		// create the local node
 		try {
 			localNode = new Node();
 		} catch (UnknownHostException e) {
-			System.out.println("The local Node couldn't be started. Aborting execution");
-			e.printStackTrace();
-			return;
+			logger.fatal("The local node couldn't be started. Aborting execution. [Message: " + e.getMessage() + "]");
+			logger.debug(e.getStackTrace()[0] + ";" /*+ e.getStackTrace()[1]*/);
+			//TODO see how to print several lines of the stack trace
 		}
 		
 		System.out.println("Node '" + localNode + "' started successfully");
