@@ -10,6 +10,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.configuration.Configuration;
 import ar.edu.itba.pod.simul.communication.ConnectionManager;
 
 public class NodeManagement {
@@ -21,6 +22,16 @@ public class NodeManagement {
 	private static Logger logger = Logger.getLogger(NodeManagement.class);
 	
 	public static void main(String[] args) {
+		
+		Configuration conf;
+		try {
+			conf = new Configuration("node.conf");
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			return;
+		}
+		System.out.println("Obtained from conf:" + conf.getProperty("pepe"));
 		
 		// set the basic configuration for the logger, so everything goes to stdout
 		BasicConfigurator.configure();

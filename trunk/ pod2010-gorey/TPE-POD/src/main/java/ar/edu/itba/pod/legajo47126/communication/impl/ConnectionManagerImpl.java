@@ -28,6 +28,8 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 	// RMI Registry
 	private Registry registry;
 	
+	//TODO add a list of the known registries, so I don't have to locate one every time
+	
 	// ClusterAdministration instance to handle the group connections
 	private ClusterAdministration clusterAdministration;
 	
