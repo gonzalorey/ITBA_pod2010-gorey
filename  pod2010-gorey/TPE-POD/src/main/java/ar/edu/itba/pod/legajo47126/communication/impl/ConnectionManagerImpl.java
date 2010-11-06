@@ -1,6 +1,5 @@
 package ar.edu.itba.pod.legajo47126.communication.impl;
 
-import java.net.UnknownHostException;
 import java.rmi.AccessException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
@@ -9,8 +8,9 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
+import org.apache.log4j.Logger;
+
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
-import ar.edu.itba.pod.legajo47126.node.Node;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
 import ar.edu.itba.pod.simul.communication.ClusterCommunication;
@@ -30,11 +30,18 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 	
 	//TODO add a list of the known registries, so I don't have to locate one every time
 	
+	// instance of the log4j logger
+	private static Logger logger = Logger.getLogger(ConnectionManagerImpl.class);
+	
 	// ClusterAdministration instance to handle the group connections
 	private ClusterAdministration clusterAdministration;
 	
+	// MessageManager instance, that implements ClusterCommunication and MessageListener
+	private MessageManager messageManager;
+	
 	private ConnectionManagerImpl() throws RemoteException{
 		UnicastRemoteObject.exportObject(this, 0);
+		logger.debug("Instantiating the Connection Manager...");
 		
 		// start the RMI Registry
 		registry = startRMIRegistry();
@@ -42,18 +49,22 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		// instance the ClusterAdministration
 		clusterAdministration = new ClusterAdministrationImpl(NodeManagement.getLocalNode());
 		
+		// instance the MessageManager
+		messageManager = new MessageManager();
+		messageManager.startMessageProcessor();
+		
 		// publish the ConnectionManager
 		try {
 			registry.bind(CONNECTION_MANAGER_NAME, this);
-			System.out.println("Connection Manager binded successfully");
+			logger.info("Connection Manager binded successfully");
 		} catch (AccessException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (AlreadyBoundException e) {
-			// TODO Auto-generated catch block
+			logger.error("The object is already bounded");
 			e.printStackTrace();
 		}
 	}
@@ -79,49 +90,31 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 	
 	@Override
 	public ConnectionManager getConnectionManager(String nodeId) throws RemoteException {
-		
-		// instance to return
-		ConnectionManager connectionManager = null;
-		
-		// obtain the target node
-		Node targetNode;
-		try {
-			targetNode = Node.parse(nodeId);
-		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw e;
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			//throw e;
-			throw new RemoteException();
-		}
+		logger.debug("Obtaining the RMI Registry from node [" + nodeId + "]...");
 		
 		// connect to the registry of the target node
-		Registry registry = LocateRegistry.getRegistry(targetNode.getHostAddress(), targetNode.getPort());
-		
-		System.out.println("Registry from " + targetNode + " obtained successfully");
+		Registry registry = LocateRegistry.getRegistry(nodeId);
+		logger.debug("RMI Registry obtained successfully");
 		
 		// obtain the reference to his ConnectionManager
 		try {
-			connectionManager = (ConnectionManager) registry.lookup(CONNECTION_MANAGER_NAME);
-			System.out.println("Connection Manager from " + targetNode + " obtained successfully");
+			logger.debug("Obtaining the ConnectionManager...");
+			ConnectionManager connectionManager = (ConnectionManager) registry.lookup(CONNECTION_MANAGER_NAME);
+			logger.debug("Connection Manager obtained successfully");
+			
+			return connectionManager;
 		} catch (NotBoundException e) {
-			// TODO log this one
+			logger.error("Remote reference not bounded to the name [" + CONNECTION_MANAGER_NAME + "]");
 			e.printStackTrace();
-			//throw e;
+			//TODO make NoConnectionAvailableException();
 			//throw new NoConnectionAvailableException();
 			throw new RemoteException();
 		}
-		
-		return connectionManager;
 	}
 	
 	@Override
 	public ClusterCommunication getGroupCommunication() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		return messageManager;
 	}
 
 	@Override
@@ -151,19 +144,22 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		// RMI Registry
 		Registry registry = null;
 		
+		// get the RMI Registry
 		try {
-			// create the RMI Registry
+			logger.debug("Create the RMI Registry...");
 			registry = LocateRegistry.createRegistry(NodeManagement.getLocalNode().getPort());
-			System.out.println("RMI Registry raised successfully");
+			logger.debug("RMI Registry raised successfully");
 		} catch (RemoteException e) {
-			// aparently the rmiregistry was already instantiated
+			logger.warn("Aparently, the RMI Registry was already instantiated");
 			e.printStackTrace();
 			
+			// try to obtain the already created RMI Registry
 			try {
-				// try to obtain the already created RMI Registry
+				logger.debug("Try to obtain the already created RMI Registry");
 				registry = LocateRegistry.getRegistry();
-				System.out.println("RMI Registry joined successfully");
+				logger.debug("RMI Registry joined successfully");
 			} catch (RemoteException e1) {
+				logger.error("The RMI Registry couldn't be obtained");
 				e1.printStackTrace();
 			}
 		}

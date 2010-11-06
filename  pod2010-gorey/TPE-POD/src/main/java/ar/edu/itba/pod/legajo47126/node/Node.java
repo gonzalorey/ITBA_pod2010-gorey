@@ -17,7 +17,7 @@ public class Node implements ReferenceName, RegistryPort{
 	private String nodeId;
 	
 	/**
-	 * A node identifying the local machine with a nodeId 'address:port'
+	 * A node identifying the local machine
 	 * 
 	 * @param address address of the host to use as entry point
 	 * @param port port to listen to incoming connections
@@ -29,12 +29,44 @@ public class Node implements ReferenceName, RegistryPort{
 		this.port = port;
 		
 		// build the nodeId
-		this.nodeId = this.inetAddress.getHostAddress() + ":" + String.valueOf(this.port);
+		this.nodeId = this.inetAddress.getHostAddress();
 	}
 	
 	/**
-	 * A node identifying the local machine with a nodeId 'address:port'.
+	 * A node identifying the local machine
 	 * It uses the local host and default RMI port 1099 to listen to incoming connections
+	 * 
+	 * @param address address of the host to use as entry point
+	 * @throws UnknownHostException
+	 */
+	public Node(String address) throws UnknownHostException {
+		// get the address and port
+		this.inetAddress = InetAddress.getByName(address);
+		this.port = DEFAULT_PORT_NUMBER;
+		
+		// build the nodeId
+		this.nodeId = this.inetAddress.getHostAddress();
+	}
+	
+	/**
+	 * A node identifying the local machine
+	 * 
+	 * @param port port of the host to use as entry point
+	 * @throws UnknownHostException
+	 */
+	public Node(int port) throws UnknownHostException {
+		// get the address and port
+		this.inetAddress = InetAddress.getLocalHost();
+		this.port = port;
+		
+		// build the nodeId
+		this.nodeId = this.inetAddress.getHostAddress();
+	}
+	
+	/**
+	 * A node identifying the local machine
+	 * It uses the local host and default RMI port 1099 to listen to incoming connections
+	 * 
 	 * @throws UnknownHostException
 	 */
 	public Node() throws UnknownHostException{
@@ -43,11 +75,11 @@ public class Node implements ReferenceName, RegistryPort{
 		this.port = DEFAULT_PORT_NUMBER;
 		
 		// build the nodeId
-		this.nodeId = this.inetAddress.getHostAddress() + ":" + String.valueOf(this.port);
+		this.nodeId = this.inetAddress.getHostAddress();
 	}
 	
 	/**
-	 * NodeId representation of the node, formed by 'host_address:port'
+	 * NodeId representation of the node
 	 * 
 	 * @return String with the nodeId of the node
 	 */

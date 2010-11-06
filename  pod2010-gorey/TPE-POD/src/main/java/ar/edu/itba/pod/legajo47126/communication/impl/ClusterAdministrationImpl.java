@@ -4,6 +4,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
@@ -20,6 +21,9 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	
 	// collection with the nodes that belong to the group 
 	private CopyOnWriteArrayList<String> groupNodes = null;
+	
+	// instance of the log4j logger
+	private static Logger logger = Logger.getLogger(ClusterAdministrationImpl.class);
 	
 	/**
 	 * Instance the cluster administration with the destination node
@@ -42,9 +46,11 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 			
 			// instantiate the list of group nodes with a concurrent array list
 			groupNodes = new CopyOnWriteArrayList<String>();
-		
+			
+			logger.info("Group " + groupId + " created");
+			
 		} else {
-			throw new IllegalStateException();
+			throw new IllegalStateException("The node belongs to a group already");
 		}
 	}
 	
@@ -59,55 +65,81 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	}
 		
 	@Override
-	public void connectToGroup(String initialNode) throws RemoteException {
+	public void connectToGroup(String initialNode) throws RemoteException {		
 		
-		System.out.println("connecting to group...");
+		logger.debug("Connecting to a group...");
+		
 		if(groupId != null)
 			// the destination node already belongs to a group
-			throw new IllegalStateException();
+			throw new IllegalStateException("The destination node " + destinationNode + 
+					" already belongs to a group");
 		
-		System.out.println("I don't belong to a group");
+		logger.debug("The destination node " + destinationNode + " doesn't belong to a group");
+		
 		if(initialNode.equals(destinationNode.getNodeId()))
 			// the destination node is the same as the initial node
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("The destination node " + destinationNode + 
+					" is the same as the initial node");
 		
-		System.out.println("get the group id of " + initialNode);
+		logger.debug("Get the group id of the initial node " + initialNode);
+		
 		// set the destination node group as the one from the initial node
 		groupId = ConnectionManagerImpl.getInstance().getConnectionManager(initialNode).
 				getClusterAdmimnistration().getGroupId();
 		
-		System.out.println("I'm connected to " + groupId + ". Now, tell him to add me");
-		// tell the initial node to add the destination node
-		ConnectionManagerImpl.getInstance().getConnectionManager(initialNode).
-		getClusterAdmimnistration().addNewNode(destinationNode.getNodeId());
+		logger.debug("Destination node " + destinationNode + " connected to " + groupId + ". " +
+				"Now, tell the initial node " + initialNode + " to add him");
 		
-		System.out.println("connected ^_^");
+		try{
+			// tell the initial node to add the destination node
+			ConnectionManagerImpl.getInstance().getConnectionManager(initialNode).
+			getClusterAdmimnistration().addNewNode(destinationNode.getNodeId());
+		} catch (Exception e) {
+			// set the group node back to the default state
+			groupId = null;
+			
+			logger.error("There was an error during the addition of the destination node " + destinationNode + ". " + 
+					"Message: " + e.getMessage());
+			
+			throw new RemoteException();
+		}
+		
+		logger.debug("The initial node " + initialNode + " successfully added the " +
+				"destination node " + destinationNode + " to the group");
 	}
 	
 	@Override
 	public Iterable<String> addNewNode(String newNode) throws RemoteException {
 		
-		System.out.println("adding new node...");
+		logger.debug("Adding a new node...");
+		
 		if(groupId == null)
 			// the destination node is not connected to a cluster
-			throw new IllegalStateException();
+			throw new IllegalStateException("The destination node " + destinationNode + 
+					" is not connected to a group");
 		
-		System.out.println("the destination node is connected to the group " + groupId);
+		logger.debug("The destination node " + destinationNode + " is connected to the group " + groupId);
+		
 		// get the new node group id
 		String newNodeGroupId = ConnectionManagerImpl.getInstance().getConnectionManager(newNode).
 							getClusterAdmimnistration().getGroupId();
 		
-		System.out.println("seeing if the destination group id is the same as " + newNodeGroupId);
+		logger.debug("Seeing if the destination node's group is the same as the new node's group");
+		
 		if(!groupId.equals(newNodeGroupId))
 			// the destination node's group id isn't the same as the newNode's group
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("The destination node's group isn't the same as" +
+					"the new node's group");
 		
-		System.out.println("adding the node");
+		logger.debug("Adding the new node " + newNode);
 		
 		// add the node to the group nodes
 		groupNodes.add(newNode);
 		
-		System.out.println("tadaaaaaaaa");
+		logger.debug("New node " +  newNode + " added successfully to the group");
+		
+		//TODO let others now of this...
+		
 		return groupNodes;
 	}
 
@@ -115,5 +147,5 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	public void disconnectFromGroup(String nodeId) throws RemoteException {
 		// TODO Auto-generated method stub
 	}
-
+	
 }
