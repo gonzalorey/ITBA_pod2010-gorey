@@ -5,6 +5,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
+import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
 
 public class MessageDepurator implements Runnable {
@@ -21,16 +22,16 @@ public class MessageDepurator implements Runnable {
 	public MessageDepurator(LinkedBlockingQueue<Message> broadcastedMessagesQueue){
 		this.broadcastedMessagesQueue = broadcastedMessagesQueue;
 		
-		this.messageExpirationTime = 2000; // TODO get it from the config
+		this.messageExpirationTime = NodeManagement.getConfigFile().getProperty("MessageExpirationTime", 2000);
 	}
 	
 	@Override
 	public void run() {
-		// instantiate the datetime object>>
+		// instantiate the datetime object
 		DateTime dateTime = new DateTime();
 		
 		while(true){
-			// peek the FIRST message of the queue
+			// peek the first message of the queue
 			Message message = broadcastedMessagesQueue.peek();
 			
 			if(message != null){
@@ -40,7 +41,7 @@ public class MessageDepurator implements Runnable {
 				}
 			} else {
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(500);
 				} catch (InterruptedException e) {
 					logger.error("Interrupted while sleeping");
 					logger.error("Error message:" + e.getMessage());

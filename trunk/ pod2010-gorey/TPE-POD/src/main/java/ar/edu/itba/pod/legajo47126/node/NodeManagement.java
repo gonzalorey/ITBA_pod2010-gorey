@@ -12,7 +12,7 @@ import org.joda.time.DateTime;
 
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.paylod.impl.DisconnectPayloadImpl;
-import ar.edu.itba.pod.legajo47126.configuration.Configuration;
+import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.MessageType;
 
@@ -24,16 +24,17 @@ public class NodeManagement {
 	// instance of the log4j logger
 	private static Logger logger = Logger.getLogger(NodeManagement.class);
 	
+	private static ConfigFile configFile;
+	
 	public static void main(String[] args) {
-		
 		// set the basic configuration for the logger, so everything goes to stdout
-		BasicConfigurator.configure();
+		BasicConfigurator.configure();	//TODO set a propper configuration file for the logger
 		
 		// configuration class to get the properties from the config file
-		Configuration conf;
 		try {
-			conf = new Configuration("node.conf");
-			logger.info("Obtained from conf: '" + conf.getProperty("pepe") + "'");
+			String configFileName = "node.conf";		// TODO maybe it should be get by a parameter
+			configFile = new ConfigFile(configFileName);
+			logger.info("Obtained from conf: '" + configFile.getProperty("pepe", "pepe_default") + "'");
 		} catch (IOException e) {
 			logger.error("'node.conf' file not found. Using default configurations");
 			e.printStackTrace();
@@ -85,6 +86,10 @@ public class NodeManagement {
 		return localNode;
 	}
 	
+	public static ConfigFile getConfigFile() {
+		return configFile;
+	}
+
 	// console commands
 	private enum Commands{CONNECT_GROUP, CREATE_GROUP, SEND, EXIT, WRONG_COMMAND}
 	

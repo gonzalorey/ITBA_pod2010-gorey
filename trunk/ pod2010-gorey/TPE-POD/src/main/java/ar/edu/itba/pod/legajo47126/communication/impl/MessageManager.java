@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import ar.edu.itba.pod.legajo47126.communication.paylod.impl.MessageDepurator;
 import ar.edu.itba.pod.legajo47126.communication.paylod.impl.MessageProcessor;
 import ar.edu.itba.pod.legajo47126.node.Node;
+import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.ClusterCommunication;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.MessageListener;
@@ -27,22 +28,14 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 	
 	public MessageManager() throws RemoteException{
 		UnicastRemoteObject.exportObject(this, 0);
-		
+
 		// instance the message queue
-		messagesQueue = new LinkedBlockingQueue<Message>();
+		messagesQueue = new LinkedBlockingQueue<Message>(NodeManagement.getConfigFile().
+				getProperty("MessagesQueueSize", 1000));
 		
 		// instance the broadcasted messages queue
-		broadcastedMessagesQueue = new LinkedBlockingQueue<Message>(100);	//TODO get it with the config file
-	}
-	
-	public MessageManager(int queueSize) throws RemoteException{
-		UnicastRemoteObject.exportObject(this, 0);
-		
-		// instance the message queue
-		messagesQueue = new LinkedBlockingQueue<Message>(queueSize);
-		
-		// instance the broadcasted messages queue
-		broadcastedMessagesQueue = new LinkedBlockingQueue<Message>(100);	//TODO get it with the config file
+		broadcastedMessagesQueue = new LinkedBlockingQueue<Message>(NodeManagement.getConfigFile().
+				getProperty("BroadcastedMessagesQueueSize", 1000));
 	}
 	
 	@Override
