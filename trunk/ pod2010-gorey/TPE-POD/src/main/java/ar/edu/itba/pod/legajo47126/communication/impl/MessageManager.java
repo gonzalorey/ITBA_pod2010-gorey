@@ -2,11 +2,14 @@ package ar.edu.itba.pod.legajo47126.communication.impl;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
+import ar.edu.itba.pod.legajo47126.communication.paylod.impl.MessageDepurator;
 import ar.edu.itba.pod.legajo47126.communication.paylod.impl.MessageProcessor;
+import ar.edu.itba.pod.legajo47126.node.Node;
 import ar.edu.itba.pod.simul.communication.ClusterCommunication;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.MessageListener;
@@ -17,26 +20,57 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 	private static Logger logger = Logger.getLogger(MessageManager.class);
 
 	// blocking queue that holds the messages during their arrival
-	LinkedBlockingQueue<Message> messageQueue;
+	LinkedBlockingQueue<Message> messagesQueue;
+	
+	// list of broadcasted messages to be depurated every few seconds
+	private LinkedBlockingQueue<Message> broadcastedMessagesQueue;
 	
 	public MessageManager() throws RemoteException{
 		UnicastRemoteObject.exportObject(this, 0);
 		
 		// instance the message queue
-		messageQueue = new LinkedBlockingQueue<Message>();		
+		messagesQueue = new LinkedBlockingQueue<Message>();
+		
+		// instance the broadcasted messages queue
+		broadcastedMessagesQueue = new LinkedBlockingQueue<Message>(100);	//TODO get it with the config file
 	}
 	
 	public MessageManager(int queueSize) throws RemoteException{
 		UnicastRemoteObject.exportObject(this, 0);
 		
 		// instance the message queue
-		messageQueue = new LinkedBlockingQueue<Message>(queueSize);
+		messagesQueue = new LinkedBlockingQueue<Message>(queueSize);
+		
+		// instance the broadcasted messages queue
+		broadcastedMessagesQueue = new LinkedBlockingQueue<Message>(100);	//TODO get it with the config file
 	}
 	
 	@Override
 	public void broadcast(Message message) throws RemoteException {
-		// TODO Auto-generated method stub
+		logger.debug("Broadcasting message [" + message + "]");
 		
+		// instance the gossip probability with the maximum
+		double gossipProbability = 1;
+		logger.debug("Start broadcasting with a gossip probability of " + gossipProbability);
+		
+		// create the random generator for the gossip probability
+		Random rand = new Random();
+
+		for(Node n : ConnectionManagerImpl.getInstance().getKnownNodes().values()){
+			logger.debug("Sending the message to node [" + n + "]");
+			
+			if(rand.nextDouble() < gossipProbability){
+				if(!n.getConnectionManager().getGroupCommunication().getListener().onMessageArrive(message)){
+					// lowering the gossip probability
+					gossipProbability -= 1/ConnectionManagerImpl.getInstance().getKnownNodes().size();
+					logger.debug("Gossip probability lowered to " + gossipProbability);
+				}
+			}
+		}
+		
+		// add the message to the broadcasted messages queue
+		broadcastedMessagesQueue.add(message);
+		logger.debug("Message added to the broadcasted messages queue");
 	}
 	
 	@Override
@@ -50,21 +84,25 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 
 	@Override
 	public MessageListener getListener() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public boolean onMessageArrive(Message message) throws RemoteException {
 		logger.debug("Message [" + message + "] arrived");
 		
-		if(messageQueue.contains(message)){
+		if(messagesQueue.contains(message)){
 			logger.debug("Message already in the queue, reject it");
 			return false;
 		}
 		
+		if(broadcastedMessagesQueue.contains(message)){
+			logger.debug("Message already broadcasted, reject it");
+			return false;
+		}
+		
 		logger.debug("Message added to the queue"); 
-		messageQueue.add(message);
+		messagesQueue.add(message);
 		
 		return true;
 	}
@@ -75,10 +113,13 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		return null;
 	}
 	
-	public void startMessageProcessor(){
-		MessageProcessor messageProcessor = new MessageProcessor(messageQueue);
+	public void startMessageProcessing(){
+		// start the message depurator to empty the list of broadcasted messages after their timestamp has expired  
+		MessageDepurator messageDepurator = new MessageDepurator(broadcastedMessagesQueue);
+		new Thread(messageDepurator).start();
 		
-		Thread thread = new Thread(messageProcessor);
-		thread.start();
+		// start the message processor to process the arriving messages
+		MessageProcessor messageProcessor = new MessageProcessor(messagesQueue);
+		new Thread(messageProcessor).start();
 	}
 }

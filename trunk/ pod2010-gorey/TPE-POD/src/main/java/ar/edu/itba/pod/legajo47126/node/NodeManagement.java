@@ -8,6 +8,7 @@ import java.rmi.RemoteException;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
 
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.paylod.impl.DisconnectPayloadImpl;
@@ -147,7 +148,7 @@ public class NodeManagement {
 			case SEND:
 				try {
 					String nodeId = line.split(" ")[1];
-					Message msg = new Message(localNode.getNodeId(), 1, MessageType.DISCONNECT, new DisconnectPayloadImpl("22")); 
+					Message msg = new Message(localNode.getNodeId(), (new DateTime()).getMillis(), MessageType.DISCONNECT, new DisconnectPayloadImpl("22")); 
 					logger.info("Sending message [" + msg + "] to node [" + nodeId + "]");
 					if(ConnectionManagerImpl.getInstance().getGroupCommunication().send(msg, nodeId))
 						logger.info("Message sent successfully");

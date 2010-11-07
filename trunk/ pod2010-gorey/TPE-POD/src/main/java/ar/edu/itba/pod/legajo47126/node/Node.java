@@ -2,8 +2,10 @@ package ar.edu.itba.pod.legajo47126.node;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.rmi.registry.Registry;
 
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
+import ar.edu.itba.pod.simul.communication.ConnectionManager;
 import ar.edu.itba.pod.simul.communication.ReferenceName;
 
 
@@ -15,6 +17,12 @@ public class Node implements ReferenceName, RegistryPort{
 	
 	// node Id identifying the node
 	private String nodeId;
+	
+	// RMI Registry of the node
+	private Registry registry;
+	
+	// Connection Manager of the node
+	private ConnectionManager connectionManager;
 	
 	/**
 	 * A node identifying the local machine
@@ -124,6 +132,23 @@ public class Node implements ReferenceName, RegistryPort{
 		return port;
 	}
 
+	public Registry getRegistry() {
+		return registry;
+	}
+
+	public void setRegistry(Registry registry) {
+		this.registry = registry;
+	}
+
+	public ConnectionManager getConnectionManager() {
+		return connectionManager;
+	}
+
+	public void setConnectionManager(ConnectionManager connectionManager) {
+		this.connectionManager = connectionManager;
+	}
+
+	@Deprecated
 	public static Node parse(String nodeId) throws NumberFormatException, UnknownHostException{
 		// split the node to get the address and the port
 		String[] aux = nodeId.split(":");
