@@ -9,15 +9,15 @@ public class DisconnectPayloadImpl implements DisconnectPayload {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private String disconectedNodeId;
+	private String disconnectedNodeId;
 	
-	public DisconnectPayloadImpl(String disconectedNodeId){
-		this.disconectedNodeId = disconectedNodeId;
+	public DisconnectPayloadImpl(String disconnectedNodeId){
+		this.disconnectedNodeId = disconnectedNodeId;
 	}
 	
 	@Override
 	public String getDisconnectedNodeId() {
-		return disconectedNodeId;
+		return disconnectedNodeId;
 	}
 
 }

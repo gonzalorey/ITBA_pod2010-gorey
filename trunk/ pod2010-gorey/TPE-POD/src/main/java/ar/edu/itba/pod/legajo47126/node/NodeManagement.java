@@ -8,13 +8,9 @@ import java.rmi.RemoteException;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
-import org.joda.time.DateTime;
 
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.DisconnectPayloadImpl;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
-import ar.edu.itba.pod.simul.communication.Message;
-import ar.edu.itba.pod.simul.communication.MessageType;
 
 public class NodeManagement {
 	
@@ -91,7 +87,7 @@ public class NodeManagement {
 	}
 
 	// console commands
-	private enum Commands{CONNECT_GROUP, CREATE_GROUP, SEND, EXIT, WRONG_COMMAND}
+	private enum Commands{CONNECT_GROUP, CREATE_GROUP, SEND, DISCONNECT, EXIT, WRONG_COMMAND}
 	
 	
 	public static void console(){
@@ -121,56 +117,62 @@ public class NodeManagement {
 				command = Commands.CREATE_GROUP;
 			else if(line.startsWith("send "))
 				command = Commands.SEND;
+			else if(line.startsWith("disconnect "))
+				command = Commands.DISCONNECT;
 			else if(line.startsWith("exit"))
 				return;
 			else
 				command = Commands.WRONG_COMMAND;
 			
 			switch (command) {
-			case CONNECT_GROUP:
-				try {
-					String nodeId = line.split(" ")[1];
-					logger.info("Connecting to " + nodeId);
-					ConnectionManagerImpl.getInstance().getClusterAdmimnistration().connectToGroup(nodeId);
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				break;
+				case CONNECT_GROUP:
+					try {
+						String nodeId = line.split(" ")[1];
+						logger.info("Connecting to " + nodeId);
+						ConnectionManagerImpl.getInstance().getClusterAdmimnistration().connectToGroup(nodeId);
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					break;
+					
+				case CREATE_GROUP:
+					try {
+						logger.info("Creating group...");
+						ConnectionManagerImpl.getInstance().getClusterAdmimnistration().createGroup();
+						String groupId = ConnectionManagerImpl.getInstance().getClusterAdmimnistration().getGroupId();
+						logger.info("Group " + groupId + " created successfully");
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					break;
 				
-			case CREATE_GROUP:
-				try {
-					logger.info("Creating group...");
-					ConnectionManagerImpl.getInstance().getClusterAdmimnistration().createGroup();
-					String groupId = ConnectionManagerImpl.getInstance().getClusterAdmimnistration().getGroupId();
-					logger.info("Group " + groupId + " created successfully");
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				break;
-	
-			case SEND:
-				try {
-					String nodeId = line.split(" ")[1];
-					Message msg = new Message(localNode.getNodeId(), (new DateTime()).getMillis(), MessageType.DISCONNECT, new DisconnectPayloadImpl("22")); 
-					logger.info("Sending message [" + msg + "] to node [" + nodeId + "]");
-					if(ConnectionManagerImpl.getInstance().getGroupCommunication().send(msg, nodeId))
-						logger.info("Message sent successfully");
-					else
-						logger.error("There was an error during the message sending");
-				} catch (Exception e) {
-					// TODO: handle exception
-				}
-				break;
-				
-			case EXIT:
-				logger.info("EXIT: " + line);
-				return;
-				
-			case WRONG_COMMAND:
-			default:
-				logger.info("Wrong command, try again");
+				case SEND:
+					// TODO do something...
+					break;
+		
+				case DISCONNECT:
+					try {
+						String nodeId = line.split(" ")[1];
+						logger.info("Disconnecting the node...");
+						ConnectionManagerImpl.getInstance().getClusterAdmimnistration().disconnectFromGroup(nodeId);
+					} catch (Exception e) {
+						logger.error("There was an error during the disconnection of the node");
+						logger.error("Error message:" + e.getMessage());
+					}
+					break;
+					
+				case EXIT:
+					logger.info("EXIT: " + line);
+					return;
+					
+				case WRONG_COMMAND:
+					logger.info("Wrong command, try again");
+					break;
+					
+				default:
+					// do nothing
 			}
 		}
 	}

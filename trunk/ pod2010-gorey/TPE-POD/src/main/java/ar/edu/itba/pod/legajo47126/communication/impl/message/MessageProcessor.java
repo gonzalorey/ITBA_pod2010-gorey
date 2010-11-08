@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.communication.paylod.impl;
+package ar.edu.itba.pod.legajo47126.communication.impl.message;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.LinkedBlockingQueue;
