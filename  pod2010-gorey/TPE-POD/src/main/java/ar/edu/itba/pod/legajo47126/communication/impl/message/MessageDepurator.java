@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.communication.paylod.impl;
+package ar.edu.itba.pod.legajo47126.communication.impl.message;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -18,11 +18,14 @@ public class MessageDepurator implements Runnable {
 	
 	// time that informs when the expiration time was reached 
 	private long messageExpirationTime;
+	private final long DEFAULT_MESSAGE_EXPIRATION_TIME = 2000;
 	
 	public MessageDepurator(LinkedBlockingQueue<Message> broadcastedMessagesQueue){
 		this.broadcastedMessagesQueue = broadcastedMessagesQueue;
 		
-		this.messageExpirationTime = NodeManagement.getConfigFile().getProperty("MessageExpirationTime", 2000);
+		messageExpirationTime = NodeManagement.getConfigFile().getProperty("MessageExpirationTime", DEFAULT_MESSAGE_EXPIRATION_TIME);
+		if(messageExpirationTime <= 0)
+			messageExpirationTime = DEFAULT_MESSAGE_EXPIRATION_TIME;
 	}
 	
 	@Override

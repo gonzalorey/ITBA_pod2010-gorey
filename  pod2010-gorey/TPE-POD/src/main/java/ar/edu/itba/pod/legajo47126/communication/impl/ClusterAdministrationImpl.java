@@ -7,9 +7,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
+import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
 import ar.edu.itba.pod.legajo47126.node.Node;
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
+import ar.edu.itba.pod.simul.communication.Message;
 
 public class ClusterAdministrationImpl implements ClusterAdministration, RegistryPort {
 
@@ -145,7 +147,21 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 
 	@Override
 	public void disconnectFromGroup(String nodeId) throws RemoteException {
-		// TODO Auto-generated method stub
+		logger.debug("Disconnecting the node [" +  nodeId + "] from the group");
+		
+		if(!groupNodes.contains(nodeId))
+			throw new IllegalArgumentException("The node doesn't belong to the group");
+		
+		// remove the node from the group and the known nodes list 
+		groupNodes.remove(nodeId);
+		ConnectionManagerImpl.getInstance().getKnownNodes().remove(nodeId);
+		logger.debug("Node removed from groupNodes and knownNodes lists");
+
+		// create the DISCONNECT message
+		Message message = MessageFactory.DisconnectMessage(nodeId);
+		logger.debug("Built message [" + message + "], broadcast it");
+		
+		ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
 	}
 	
 }

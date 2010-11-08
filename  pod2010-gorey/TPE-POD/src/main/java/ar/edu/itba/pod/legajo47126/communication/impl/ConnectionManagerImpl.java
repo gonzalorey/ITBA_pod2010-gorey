@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
+import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageManager;
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
 import ar.edu.itba.pod.legajo47126.exceptions.WrongNodeIDException;
 import ar.edu.itba.pod.legajo47126.node.Node;
