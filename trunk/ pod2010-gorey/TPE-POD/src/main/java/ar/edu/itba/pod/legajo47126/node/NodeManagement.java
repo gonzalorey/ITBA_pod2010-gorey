@@ -10,6 +10,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
 
 public class NodeManagement {
@@ -149,13 +150,21 @@ public class NodeManagement {
 					break;
 				
 				case SEND:
-					// TODO do something...
+					try {
+						String nodeId = line.split(" ")[1];
+						logger.info("Sending a message to node [" +  nodeId + "]");
+						ConnectionManagerImpl.getInstance().getGroupCommunication().
+							send(MessageFactory.NewMessageRequest(), nodeId);
+					} catch (Exception e) {
+						logger.error("There was an error during the message sending");
+						logger.error("Error message:" + e.getMessage());
+					}
 					break;
 		
 				case DISCONNECT:
 					try {
 						String nodeId = line.split(" ")[1];
-						logger.info("Disconnecting the node...");
+						logger.info("Disconnecting the node [" + nodeId + "]");
 						ConnectionManagerImpl.getInstance().getClusterAdmimnistration().disconnectFromGroup(nodeId);
 					} catch (Exception e) {
 						logger.error("There was an error during the disconnection of the node");

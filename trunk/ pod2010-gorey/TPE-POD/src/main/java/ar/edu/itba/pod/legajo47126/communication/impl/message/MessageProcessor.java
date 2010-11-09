@@ -6,6 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
 
 public class MessageProcessor implements Runnable {
@@ -16,8 +17,12 @@ public class MessageProcessor implements Runnable {
 	// list of arriving messages waiting for process
 	private LinkedBlockingQueue<Message> messagesQueue;
 	
+	private long messageProcessingSleepTime;
+	
 	public MessageProcessor(LinkedBlockingQueue<Message> messageQueue){
 		this.messagesQueue = messageQueue;
+		
+		messageProcessingSleepTime = NodeManagement.getConfigFile().getProperty("MessageProcessingSleepTime", 1000);
 	}
 	
 	@Override
@@ -35,9 +40,28 @@ public class MessageProcessor implements Runnable {
 						try {
 							// broadcast the message
 							ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+							
+							// TODO disconnect the node
 						} catch (RemoteException e) {
 							logger.error("The message couldn't be broadcasted");
 							logger.error("Error message:" + e.getMessage());
+						}
+						break;
+						
+					case NEW_MESSAGE_REQUEST:
+						logger.debug("NEW_MESSAGE_REQUEST message received");
+						break;
+						
+					case NODE_AGENTS_LOAD_REQUEST:
+						logger.debug("NODE_AGENTS_LOAD_REQUEST message received, broadcasting...");
+						try {
+							// broadcast the message
+							ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+							
+							// TODO send a NODE_AGENT_LOAD message
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
 						break;
 
@@ -55,7 +79,7 @@ public class MessageProcessor implements Runnable {
 				
 				// if no message was waiting to be processed, sleep for a while
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(messageProcessingSleepTime);
 				} catch (InterruptedException e) {
 					logger.error("Interrupted while sleeping");
 					logger.error("Error message:" + e.getMessage());
