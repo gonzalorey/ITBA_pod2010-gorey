@@ -2,6 +2,7 @@ package ar.edu.itba.pod.legajo47126.communication.impl;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.log4j.Logger;
@@ -10,13 +11,14 @@ import org.joda.time.DateTime;
 import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
 import ar.edu.itba.pod.legajo47126.node.Node;
+import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
 import ar.edu.itba.pod.simul.communication.Message;
 
 public class ClusterAdministrationImpl implements ClusterAdministration, RegistryPort {
 
 	// destination node to be used during the cluster operations
-	private Node destinationNode = null;
+	private Node destinationNode = null;	// TODO change destination for local in every place in this class...
 	
 	// name of the group that the node is connected to
 	private String groupId = null; 
@@ -41,6 +43,8 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	
 	@Override
 	public void createGroup() throws RemoteException {
+		logger.debug("Creating the group...");
+		
 		if (groupId == null){
 			// set the group id with the current milliseconds
 			long millis = new DateTime().getMillis();
@@ -48,8 +52,6 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 			
 			// instantiate the list of group nodes with a concurrent array list
 			groupNodes = new CopyOnWriteArrayList<String>();
-			
-			logger.info("Group " + groupId + " created");
 			
 		} else {
 			throw new IllegalStateException("The node belongs to a group already");
@@ -94,10 +96,19 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		
 		try{
 			// tell the initial node to add the destination node
-			ConnectionManagerImpl.getInstance().getConnectionManager(initialNode).
+			Iterable<String> initialNodeGroupNodes = ConnectionManagerImpl.getInstance().getConnectionManager(initialNode).
 			getClusterAdmimnistration().addNewNode(destinationNode.getNodeId());
+			
+			// adding the initial node group nodes to the groupNodes
+			for(String nodeId : initialNodeGroupNodes){
+				if(!nodeId.equals(destinationNode)){
+					groupNodes.add(nodeId);
+					logger.debug("Node [" + nodeId + "] added to the group nodes list");
+				}
+			}
+			
 		} catch (Exception e) {
-			// set the group node back to the default state
+			// set the group id back to the default state
 			groupId = null;
 			
 			logger.error("There was an error during the addition of the destination node " + destinationNode + ". " + 
@@ -108,6 +119,14 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		
 		logger.debug("The initial node " + initialNode + " successfully added the " +
 				"destination node " + destinationNode + " to the group");
+		
+		// TODO this code should be here or where the connectToGroup method is called?
+		// broadcast a message saying that the local node is the new coordinator
+		logger.debug("Node [" +  NodeManagement.getLocalNode() + "] is the new coordinator, inform all the others");
+		Message message = MessageFactory.NodeAgentLoadRequestMessage();
+		ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+		
+		// TODO wait a few seconds and then, if I'm the coordinator, balance the loads, else, wait for the REAL coordinator to do it 
 	}
 	
 	@Override
@@ -133,16 +152,13 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 			throw new IllegalArgumentException("The destination node's group isn't the same as" +
 					"the new node's group");
 		
-		logger.debug("Adding the new node " + newNode);
+		// obtain the random nodes to return
+		CopyOnWriteArrayList<String> randomGroupNodes = getRandomGroupNodes(groupNodes);
 		
-		// add the node to the group nodes
 		groupNodes.add(newNode);
-		
 		logger.debug("New node " +  newNode + " added successfully to the group");
 		
-		//TODO let others now of this...
-		
-		return groupNodes;
+		return randomGroupNodes;
 	}
 
 	@Override
@@ -162,6 +178,24 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		logger.debug("Built message [" + message + "], broadcast it");
 		
 		ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+	}
+	
+	private CopyOnWriteArrayList<String> getRandomGroupNodes(CopyOnWriteArrayList<String> groupNodes){
+		CopyOnWriteArrayList<String> randomGroupNodes = new CopyOnWriteArrayList<String>();
+		
+		Random rand = new Random();
+		double comparator = rand.nextDouble();
+		
+		for(String nodeId : groupNodes){
+			if(rand.nextDouble() < comparator)
+				randomGroupNodes.add(nodeId);
+		}
+		
+		return randomGroupNodes;
+	}
+	
+	public CopyOnWriteArrayList<String> getGroupNodes(){
+		return groupNodes;
 	}
 	
 }

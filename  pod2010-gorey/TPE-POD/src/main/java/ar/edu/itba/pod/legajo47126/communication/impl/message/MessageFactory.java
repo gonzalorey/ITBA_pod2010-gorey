@@ -20,7 +20,7 @@ import ar.edu.itba.pod.simul.market.Resource;
 public class MessageFactory {
 	
 	/**
-	 * Creates a DISCONNECT message
+	 * Creates a DISCONNECT message (should broadcast)
 	 * 
 	 * @param disconnectedNodeId nodeId of the node being desconected 
 	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
@@ -32,16 +32,31 @@ public class MessageFactory {
 	
 	// TODO write all the comments...
 	
+	/**
+	 * Creates a NEW_MESSAGE_REQUEST message
+	 * 
+	 * @return a message containing the local node as sender, the current timestamp, and the propper payload 
+	 */
 	public static Message NewMessageRequest(){
 		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
 				MessageType.NEW_MESSAGE_REQUEST, new NewMessageRequestPayloadImpl());
 	}
 	
+	/**
+	 * Creates a NEW_MESSAGE_RESPONSE message
+	 * 
+	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
+	 */
 	public static Message NewMessageResponse(){
 		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
 				MessageType.NEW_MESSAGE_RESPONSE, new NewMessageResponsePayloadImpl());
 	}
 	
+	/**
+	 * Creates a NODE_AGENT_LOAD message
+	 * 
+	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
+	 */
 	public static Message NodeAgentLoadMessage(){
 		int load = 0; // TODO get the propper load
 		
@@ -49,6 +64,11 @@ public class MessageFactory {
 				MessageType.NODE_AGENTS_LOAD, new NodeAgentLoadPayloadImpl(load));
 	}
 	
+	/**
+	 * Creates a NODE_AGENT_LOAD_REQUEST message. This message is sent by a coordinator in order to know node agent load
+	 * 
+	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
+	 */
 	public static Message NodeAgentLoadRequestMessage(){
 		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
 				MessageType.NODE_AGENTS_LOAD_REQUEST, new NodeAgentLoadRequestPayloadImpl());

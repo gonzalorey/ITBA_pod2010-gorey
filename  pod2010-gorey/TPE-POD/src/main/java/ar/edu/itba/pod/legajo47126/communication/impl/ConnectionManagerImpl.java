@@ -146,6 +146,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 			//throw new NoConnectionAvailableException();
 			throw new RemoteException();
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error("There was an error and the remote Connection Manager coudn't be found");
 			logger.debug("Error message:" + e.getMessage());
 			throw new RemoteException();
