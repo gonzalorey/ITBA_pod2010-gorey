@@ -198,4 +198,16 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		return groupNodes;
 	}
 	
+	public void disconnectFromGroupWithoutBroadcasting(String nodeId) throws RemoteException {
+		logger.debug("Disconnecting the node [" +  nodeId + "] from the group");
+		
+		if(!groupNodes.contains(nodeId))
+			throw new IllegalArgumentException("The node doesn't belong to the group");
+		
+		// remove the node from the group and the known nodes list 
+		groupNodes.remove(nodeId);
+		ConnectionManagerImpl.getInstance().getKnownNodes().remove(nodeId);
+		logger.debug("Node removed from groupNodes and knownNodes lists");
+	}
+	
 }
