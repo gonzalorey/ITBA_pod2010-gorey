@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -21,7 +22,11 @@ public class NodeManagement {
 	// instance of the log4j logger
 	private static Logger logger = Logger.getLogger(NodeManagement.class);
 	
+	// configuration file with the loaded properties
 	private static ConfigFile configFile;
+	
+	// load of every known node
+	private static ConcurrentHashMap<String, Integer> nodeAgentsLoad;
 	
 	public static void main(String[] args) {
 		// set the basic configuration for the logger, so everything goes to stdout
@@ -55,6 +60,9 @@ public class NodeManagement {
 			
 			return;
 		}
+		
+		// instance the node agents load
+		nodeAgentsLoad = new ConcurrentHashMap<String, Integer>();
 		
 		// create the connection manager
 		try {
@@ -185,4 +193,21 @@ public class NodeManagement {
 			}
 		}
 	}
+	
+	public static void resetNodeAgentsLoad(){
+		// create a new instance of the ConcurrentHashMap, clearing all the 
+		nodeAgentsLoad = new ConcurrentHashMap<String, Integer>();
+	}
+	
+	public static void setNodeAgentsLoad(String nodeId, int load){
+		if(nodeAgentsLoad.contains(nodeId))
+			nodeAgentsLoad.replace(nodeId, load);
+		else
+			nodeAgentsLoad.put(nodeId, load);
+	}
+	
+	public static ConcurrentHashMap<String, Integer> getNodeAgentsLoad(){
+		return nodeAgentsLoad;
+	}
+	
 }
