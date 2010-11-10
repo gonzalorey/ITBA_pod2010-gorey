@@ -24,6 +24,8 @@ public class Node implements ReferenceName, RegistryPort{
 	// Connection Manager of the node
 	private ConnectionManager connectionManager;
 	
+	// TODO add the agents and the loads here!!!
+	
 	/**
 	 * A node identifying the local machine
 	 * 
