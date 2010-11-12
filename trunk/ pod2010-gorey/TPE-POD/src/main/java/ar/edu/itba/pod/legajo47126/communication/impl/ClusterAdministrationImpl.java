@@ -10,6 +10,7 @@ import org.joda.time.DateTime;
 
 import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
+import ar.edu.itba.pod.legajo47126.node.CoordinationManager;
 import ar.edu.itba.pod.legajo47126.node.Node;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
@@ -120,13 +121,17 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		logger.debug("The initial node " + initialNode + " successfully added the " +
 				"destination node " + destinationNode + " to the group");
 		
-		// TODO this code should be here or where the connectToGroup method is called?
 		// broadcast a message saying that the local node is the new coordinator
-		logger.debug("Node [" +  NodeManagement.getLocalNode() + "] is the new coordinator, inform all the others");
+		logger.debug("Start coordinating, inform all the others");
 		Message message = MessageFactory.NodeAgentLoadRequestMessage();
 		ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
 		
-		// TODO wait a few seconds and then, if I'm the coordinator, balance the loads, else, wait for the REAL coordinator to do it 
+		// restart the nodeAgentsLoad
+		NodeManagement.resetNodeAgentsLoad();
+		
+		// start the coordinator thread
+		CoordinationManager coordinatorManager = new CoordinationManager();
+		new Thread(coordinatorManager).start();
 	}
 	
 	@Override

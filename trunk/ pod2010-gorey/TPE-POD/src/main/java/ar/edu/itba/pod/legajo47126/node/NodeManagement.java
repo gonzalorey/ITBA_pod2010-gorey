@@ -39,7 +39,7 @@ public class NodeManagement {
 			logger.info("Obtained from conf: '" + configFile.getProperty("pepe", "pepe_default") + "'");
 		} catch (IOException e) {
 			logger.error("'node.conf' file not found. Using default configurations");
-			e.printStackTrace();
+			logger.error("Error message:" + e.getMessage());
 			return;
 		}
 		
@@ -52,9 +52,12 @@ public class NodeManagement {
 			else
 				localNode = new Node();
 			logger.info("Node '" + localNode + "' started successfully");
+			
+			// TODO add dynamically
+			localNode.setLoad(configFile.getProperty("InitialLoadAmount", 5));
 		} catch (UnknownHostException e) {
 			logger.fatal("The local node couldn't be started. Aborting execution");
-			logger.debug("[Message: " + e.getMessage() + "] - " + e.getStackTrace()[0] + ";" /*+ e.getStackTrace()[1]*/);
+			logger.fatal("Error message:" + e.getMessage());
 			
 			//TODO see how to print several lines of the stack trace
 			
@@ -70,7 +73,7 @@ public class NodeManagement {
 			logger.info("Connection Manager initialized successfully");
 		} catch (RemoteException e) {
 			logger.fatal("There was an error during the Connection Manager initialization. Aborting execution");
-			e.printStackTrace();
+			logger.fatal("Error message:" + e.getMessage());
 			
 			return;
 		}

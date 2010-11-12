@@ -58,7 +58,7 @@ public class MessageFactory {
 	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
 	 */
 	public static Message NodeAgentLoadMessage(){
-		int load = 0; // TODO get the propper load
+		int load = NodeManagement.getLocalNode().getLoad(); // TODO get the propper load
 		
 		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
 				MessageType.NODE_AGENTS_LOAD, new NodeAgentLoadPayloadImpl(load));
