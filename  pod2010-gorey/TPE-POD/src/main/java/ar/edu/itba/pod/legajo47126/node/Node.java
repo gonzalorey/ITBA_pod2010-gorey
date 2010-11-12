@@ -23,8 +23,12 @@ public class Node implements ReferenceName, RegistryPort{
 	
 	// Connection Manager of the node
 	private ConnectionManager connectionManager;
+
+	// list with the agents in the node
+	//private CopyOnWriteArrayList<Agent> agents;	//TODO uncomment
 	
-	// TODO add the agents and the loads here!!!
+	// load amount
+	private int load;
 	
 	/**
 	 * A node identifying the local machine
@@ -148,6 +152,14 @@ public class Node implements ReferenceName, RegistryPort{
 
 	public void setConnectionManager(ConnectionManager connectionManager) {
 		this.connectionManager = connectionManager;
+	}
+
+	public int getLoad() {
+		return load;
+	}
+
+	public void setLoad(int load) {
+		this.load = load;
 	}
 
 	@Deprecated
