@@ -18,6 +18,9 @@ import ar.edu.itba.pod.simul.communication.Message;
 
 public class ClusterAdministrationImpl implements ClusterAdministration, RegistryPort {
 
+	// instance of the log4j logger
+	private static Logger logger = Logger.getLogger(ClusterAdministrationImpl.class);
+	
 	// destination node to be used during the cluster operations
 	private Node destinationNode = null;	// TODO change destination for local in every place in this class...
 	
@@ -26,9 +29,6 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	
 	// collection with the nodes that belong to the group 
 	private CopyOnWriteArrayList<String> groupNodes = null;
-	
-	// instance of the log4j logger
-	private static Logger logger = Logger.getLogger(ClusterAdministrationImpl.class);
 	
 	/**
 	 * Instance the cluster administration with the destination node
@@ -39,7 +39,11 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	public ClusterAdministrationImpl(Node destinationNode) throws RemoteException{
 		UnicastRemoteObject.exportObject(this, 0);
 		
-		this.destinationNode = destinationNode;
+		// set the reference to the destination node
+		this.destinationNode = destinationNode;	// TODO refactor, erase this and call the NodeManagement.getLocalNode()
+		
+		// instantiate the list of group nodes with a concurrent array list
+		groupNodes = new CopyOnWriteArrayList<String>();
 	}
 	
 	@Override
@@ -50,10 +54,6 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 			// set the group id with the current milliseconds
 			long millis = new DateTime().getMillis();
 			groupId = Long.toString(millis); 
-			
-			// instantiate the list of group nodes with a concurrent array list
-			groupNodes = new CopyOnWriteArrayList<String>();
-			
 		} else {
 			throw new IllegalStateException("The node belongs to a group already");
 		}
@@ -102,18 +102,21 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 			
 			// adding the initial node group nodes to the groupNodes
 			for(String nodeId : initialNodeGroupNodes){
-				if(!nodeId.equals(destinationNode)){
+				if(!nodeId.equals(destinationNode.getNodeId())){
 					groupNodes.add(nodeId);
 					logger.debug("Node [" + nodeId + "] added to the group nodes list");
 				}
 			}
 			
+			groupNodes.add(initialNode);
+			logger.debug("Node [" + initialNode + "] added to the group nodes list");
+			
 		} catch (Exception e) {
 			// set the group id back to the default state
 			groupId = null;
-			
-			logger.error("There was an error during the addition of the destination node " + destinationNode + ". " + 
-					"Message: " + e.getMessage());
+			logger.error("There was an error during the addition of the destination node [" + destinationNode + "]");  
+			logger.error("Error message:" + e.getMessage());
+			e.printStackTrace();
 			
 			throw new RemoteException();
 		}
@@ -159,6 +162,9 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		
 		// obtain the random nodes to return
 		CopyOnWriteArrayList<String> randomGroupNodes = getRandomGroupNodes(groupNodes);
+		
+		// add the initial node to other known nodes
+		addNewNodeToOtherNodes(newNode);
 		
 		groupNodes.add(newNode);
 		logger.debug("New node " +  newNode + " added successfully to the group");
@@ -213,6 +219,30 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		groupNodes.remove(nodeId);
 		ConnectionManagerImpl.getInstance().getKnownNodes().remove(nodeId);
 		logger.debug("Node removed from groupNodes and knownNodes lists");
+	}
+	
+	private void addNewNodeToOtherNodes(String newNode) {
+		logger.debug("Adding node [" +  newNode + "] to other nodes...");
+		
+		Random rand = new Random();
+		double comparator = rand.nextDouble();
+		int amountAdded = 0;
+		
+		for(String nodeId : groupNodes){
+			if(rand.nextDouble() < comparator){
+				try {
+					ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).getClusterAdmimnistration().
+						addNewNode(newNode);
+					logger.debug("Added to node [" + nodeId + "]");
+					amountAdded++;
+				} catch (RemoteException e) {
+					logger.error("The node [" + newNode + "] couldn't be added to the node [" + nodeId + "]");
+					logger.error("Error message:" + e.getMessage());
+				}
+			}
+		}
+		
+	 	logger.debug("Node added to " + amountAdded + " node" + ((amountAdded != 1)?"s":""));
 	}
 	
 }
