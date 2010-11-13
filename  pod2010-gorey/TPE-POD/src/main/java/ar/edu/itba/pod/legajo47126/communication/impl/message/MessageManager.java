@@ -52,6 +52,7 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		// create the random generator for the gossip probability
 		Random rand = new Random();
 
+		// TODO use the group nodes, not the known nodes
 		for(Node n : ConnectionManagerImpl.getInstance().getKnownNodes().values()){
 			logger.debug("Sending the message to node [" + n + "]");
 			
