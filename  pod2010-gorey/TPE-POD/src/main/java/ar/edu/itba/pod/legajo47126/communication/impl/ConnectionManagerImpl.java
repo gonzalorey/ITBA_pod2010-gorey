@@ -55,7 +55,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		logger.debug("Message Manager initialized");
 		
 		// instance the ClusterAdministration
-		clusterAdministration = new ClusterAdministrationImpl(NodeManagement.getLocalNode());
+		clusterAdministration = new ClusterAdministrationImpl();
 		logger.debug("Connection Administration initialized");
 		
 		// instance the kown nodes map
