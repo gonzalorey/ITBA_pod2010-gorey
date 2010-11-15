@@ -18,11 +18,11 @@ public class MessageProcessor implements Runnable {
 	private static Logger logger = Logger.getLogger(MessageProcessor.class);
 	
 	// list of arriving messages waiting for process
-	private LinkedBlockingQueue<Message> messagesQueue;
+	private LinkedBlockingQueue<MessageContainer> messagesQueue;
 	
 	private long messageProcessingSleepTime;
 	
-	public MessageProcessor(LinkedBlockingQueue<Message> messageQueue){
+	public MessageProcessor(LinkedBlockingQueue<MessageContainer> messageQueue){
 		this.messagesQueue = messageQueue;
 		
 		messageProcessingSleepTime = NodeManagement.getConfigFile().getProperty("MessageProcessingSleepTime", 1000);
@@ -33,24 +33,24 @@ public class MessageProcessor implements Runnable {
 		while(true){
 			try {
 				// peek the first message of the queue
-				Message message = messagesQueue.peek();
+				MessageContainer messageContainer = messagesQueue.peek();
 				
-				if(message != null){
-					logger.debug("Processing message [" + message + "]");
+				if(messageContainer != null){
+					logger.debug("Processing message [" + messageContainer + "]");
 					
-					switch (message.getType()) {
+					switch (messageContainer.getMessage().getType()) {
 						case DISCONNECT:
 							logger.debug("DISCONNECT message received, broadcasting...");
 							try {
 								// broadcast the message
-								ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+								ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(messageContainer.getMessage());
 								logger.debug("Message successfully broadcasted");
 							} catch (RemoteException e) {
 								logger.error("The message couldn't be broadcasted");
 								logger.error("Error message:" + e.getMessage());
 							}
 	
-							DisconnectPayload disconnectPayload = (DisconnectPayload) message.getPayload(); 
+							DisconnectPayload disconnectPayload = (DisconnectPayload) messageContainer.getMessage().getPayload(); 
 							try {
 								// disconnect the node
 								((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().getClusterAdmimnistration()).
@@ -76,16 +76,16 @@ public class MessageProcessor implements Runnable {
 							logger.debug("NODE_AGENTS_LOAD message received");
 							
 							// obtaining the payload and adding the load to the node agents load map
-							NodeAgentLoadPayload payload = (NodeAgentLoadPayload) message.getPayload();
-							NodeManagement.setNodeAgentsLoad(message.getNodeId(), payload.getLoad());
-							logger.debug("Node [" + message.getNodeId() + "] and load [" + payload.getLoad() + "] added to the local map");
+							NodeAgentLoadPayload payload = (NodeAgentLoadPayload) messageContainer.getMessage().getPayload();
+							NodeManagement.setNodeAgentsLoad(messageContainer.getMessage().getNodeId(), payload.getLoad());
+							logger.debug("Node [" + messageContainer.getMessage().getNodeId() + "] and load [" + payload.getLoad() + "] added to the local map");
 							break;
 							
 						case NODE_AGENTS_LOAD_REQUEST:
 							logger.debug("NODE_AGENTS_LOAD_REQUEST message received, broadcasting...");
 							try {
 								// broadcast the message
-								ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+								ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(messageContainer.getMessage());
 								logger.debug("Message successfully broadcasted");
 							} catch (RemoteException e) {
 								logger.error("The message couldn't be broadcasted");
@@ -96,7 +96,7 @@ public class MessageProcessor implements Runnable {
 							Message loadMessage = MessageFactory.NodeAgentLoadMessage();
 							try {
 								// sending the message
-								ConnectionManagerImpl.getInstance().getGroupCommunication().send(loadMessage, message.getNodeId());
+								ConnectionManagerImpl.getInstance().getGroupCommunication().send(loadMessage, messageContainer.getMessage().getNodeId());
 								logger.debug("Message successfully sent");
 							} catch (RemoteException e) {
 								logger.error("The message couldn't be sent");
@@ -138,7 +138,7 @@ public class MessageProcessor implements Runnable {
 					logger.debug("Message successfully processed");
 					
 					// remove the message from the queue (it may not be the FIRT anymore)
-					messagesQueue.remove(message);
+					messagesQueue.remove(messageContainer);
 						
 				} else {
 					

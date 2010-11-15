@@ -3,12 +3,14 @@ package ar.edu.itba.pod.legajo47126.communication.impl.message;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
 
+import ar.edu.itba.pod.legajo47126.communication.impl.ClusterAdministrationImpl;
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
-import ar.edu.itba.pod.legajo47126.node.Node;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.ClusterCommunication;
 import ar.edu.itba.pod.simul.communication.Message;
@@ -20,10 +22,13 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 	private static Logger logger = Logger.getLogger(MessageManager.class);
 
 	// blocking queue that holds the messages during their arrival
-	LinkedBlockingQueue<Message> messagesQueue;
+	private LinkedBlockingQueue<MessageContainer> messagesQueue;
 	
 	// list of broadcasted messages to be depurated every few seconds
-	private LinkedBlockingQueue<Message> broadcastedMessagesQueue;
+	private LinkedBlockingQueue<MessageContainer> broadcastedMessagesQueue;
+	
+	// list of the last synchronization to a node 
+	private ConcurrentHashMap<String, Long> synchronizationTime; 
 	
 	// default values
 	private final int DEFAULT_MESSAGES_QUEUE_SIZE = 1000;
@@ -33,12 +38,14 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		UnicastRemoteObject.exportObject(this, 0);
 
 		// instance the message queue
-		messagesQueue = new LinkedBlockingQueue<Message>(NodeManagement.getConfigFile().
+		messagesQueue = new LinkedBlockingQueue<MessageContainer>(NodeManagement.getConfigFile().
 				getProperty("MessagesQueueSize", DEFAULT_MESSAGES_QUEUE_SIZE));
 		
 		// instance the broadcasted messages queue
-		broadcastedMessagesQueue = new LinkedBlockingQueue<Message>(NodeManagement.getConfigFile().
+		broadcastedMessagesQueue = new LinkedBlockingQueue<MessageContainer>(NodeManagement.getConfigFile().
 				getProperty("BroadcastedMessagesQueueSize", DEFAULT_BROADCASTED_MESSAGES_QUEUE_SIZE));
+		
+		synchronizationTime = new ConcurrentHashMap<String, Long>();
 	}
 	
 	@Override
@@ -51,22 +58,30 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		
 		// create the random generator for the gossip probability
 		Random rand = new Random();
-
-		// TODO use the group nodes, not the known nodes
-		for(Node n : ConnectionManagerImpl.getInstance().getKnownNodes().values()){
-			logger.debug("Sending the message to node [" + n + "]");
-			
+		
+		for(String nodeId : ((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().getClusterAdmimnistration()).getGroupNodes()){
 			if(rand.nextDouble() < gossipProbability){
-				if(!n.getConnectionManager().getGroupCommunication().getListener().onMessageArrive(message)){
+				logger.debug("Sending the message to node [" + nodeId + "]");
+				if(!ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).getGroupCommunication()
+						.getListener().onMessageArrive(message)){
 					// lowering the gossip probability
 					gossipProbability -= 1/ConnectionManagerImpl.getInstance().getKnownNodes().size();
 					logger.debug("Gossip probability lowered to " + gossipProbability);
+				} else {
+					// set the synchronization time of the node
+					long timeStamp = new DateTime().getMillis();
+					if(synchronizationTime.contains(nodeId)){
+						synchronizationTime.replace(nodeId, timeStamp);
+					} else {
+						synchronizationTime.put(nodeId, timeStamp);
+					}
+					logger.debug("Node [" + nodeId + "] synchronized at [" + timeStamp + "]");
 				}
 			}
 		}
 		
 		// add the message to the broadcasted messages queue
-		broadcastedMessagesQueue.add(message);
+		broadcastedMessagesQueue.add(new MessageContainer(message));
 		logger.debug("Message added to the broadcasted messages queue");
 	}
 	
@@ -88,26 +103,50 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 	public boolean onMessageArrive(Message message) throws RemoteException {
 		logger.debug("Message [" + message + "] arrived");
 		
-		if(messagesQueue.contains(message)){
-			logger.debug("Message already in the queue, reject it");
-			return false;
+		for(MessageContainer messageContainer : messagesQueue){
+			if(messageContainer.getMessage().equals(message)){
+				logger.debug("Message already in the queue, reject it");
+				return false;		
+			}
 		}
 		
-		if(broadcastedMessagesQueue.contains(message)){
-			logger.debug("Message already broadcasted, reject it");
-			return false;
+		for(MessageContainer messageContainer : broadcastedMessagesQueue){
+			if(messageContainer.getMessage().equals(message)){
+				logger.debug("Message already broadcasted, reject it");
+				return false;		
+			}
 		}
 		
 		logger.debug("Message added to the queue"); 
-		messagesQueue.add(message);
+		messagesQueue.add(new MessageContainer(message));
 		
 		return true;
 	}
 
 	@Override
 	public Iterable<Message> getNewMessages(String remoteNodeId) throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		logger.debug("Requesting the new messages from node [" + remoteNodeId + "]");
+		
+		LinkedBlockingQueue<Message> newMessages = new LinkedBlockingQueue<Message>();
+		
+		for(MessageContainer messageContainer : broadcastedMessagesQueue){
+			if(!synchronizationTime.contains(remoteNodeId) || 
+					synchronizationTime.get(remoteNodeId) < messageContainer.getTimeStamp()){
+				newMessages.add(messageContainer.getMessage());
+				logger.debug("Message [" + messageContainer.getMessage() + "] added to the new messages to send");
+			}
+		}
+		
+		// set the synchronization time of the node
+		long timeStamp = new DateTime().getMillis();
+		if(synchronizationTime.contains(remoteNodeId)){
+			synchronizationTime.replace(remoteNodeId, timeStamp);
+		} else {
+			synchronizationTime.put(remoteNodeId, timeStamp);
+		}
+		logger.debug("Node [" + remoteNodeId + "] synchronized at [" + timeStamp + "]");
+		
+		return newMessages;
 	}
 	
 	public void startMessageProcessing(){
@@ -118,5 +157,9 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		// start the message processor to process the arriving messages
 		MessageProcessor messageProcessor = new MessageProcessor(messagesQueue);
 		new Thread(messageProcessor).start();
+		
+		// start the message requester to get the new messages from every group node
+		MessageRequester messageRequester = new MessageRequester();
+		new Thread(messageRequester).start();
 	}
 }
