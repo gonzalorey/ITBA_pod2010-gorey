@@ -15,9 +15,9 @@ import com.google.common.base.Preconditions;
  */
 public class TransferHistory implements Serializable {
 	/**
-	 * Default serial version ID
+	 * Generated serial version ID
 	 */
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 6003956857275629231L;
 	private final List<TransferHistoryItem> historyItems;
 	private final double transactionsPerSecond;
 
