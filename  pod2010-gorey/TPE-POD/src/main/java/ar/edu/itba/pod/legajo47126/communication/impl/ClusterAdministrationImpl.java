@@ -10,8 +10,8 @@ import org.joda.time.DateTime;
 
 import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
-import ar.edu.itba.pod.legajo47126.node.CoordinationManager;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
+import ar.edu.itba.pod.legajo47126.simul.coordinator.NewNodeCoordinator;
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
 import ar.edu.itba.pod.simul.communication.Message;
 
@@ -121,7 +121,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		NodeManagement.resetNodeAgentsLoad();
 		
 		// start the coordinator thread
-		CoordinationManager coordinatorManager = new CoordinationManager();
+		NewNodeCoordinator coordinatorManager = new NewNodeCoordinator();
 		new Thread(coordinatorManager).start();
 	}
 	

@@ -16,17 +16,17 @@ import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
 
 public class NodeManagement {
 	
-	// instance of the local machine node
-	private static Node localNode;
-	
 	// instance of the log4j logger
 	private static Logger logger = Logger.getLogger(NodeManagement.class);
+	
+	// instance of the local machine node
+	private static Node localNode;
 	
 	// configuration file with the loaded properties
 	private static ConfigFile configFile;
 	
 	// load of every known node
-	private static ConcurrentHashMap<String, Integer> nodeAgentsLoad;
+	private static ConcurrentHashMap<String, Integer> nodeAgentsLoad;	// TODO should go in SimulationCommunicationImpl...
 	
 	public static void main(String[] args) {
 		// set the basic configuration for the logger, so everything goes to stdout
