@@ -14,7 +14,7 @@ import ar.edu.itba.pod.simul.communication.Message;
 public class MessageRequester implements Runnable{
 	
 	// instance of the log4j logger
-	private static Logger logger = Logger.getLogger(MessageManager.class);
+	private static Logger logger = Logger.getLogger(MessageRequester.class);
 	
 	private static long messageRequesterSleeptime;
 	

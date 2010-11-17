@@ -1,6 +1,12 @@
-package ar.edu.itba.pod.legajo47126.node;
+package ar.edu.itba.pod.legajo47126.simul.coordinator;
+
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.log4j.Logger;
+
+import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.node.NodeManagement;
+import ar.edu.itba.pod.simul.simulation.Agent;
 
 /**
  * Class called after a NODE_AGENT_LOAD_REQUEST message was sent, in order to
@@ -10,14 +16,14 @@ import org.apache.log4j.Logger;
  * @author gorey
  *
  */
-public class CoordinationManager implements Runnable{
+public class NewNodeCoordinator implements Runnable{
 	
 	// instance of the log4j logger
-	private static Logger logger = Logger.getLogger(CoordinationManager.class);
+	private static Logger logger = Logger.getLogger(NewNodeCoordinator.class);
 
 	private int coordinatorWaitTime;
 	
-	public CoordinationManager() {
+	public NewNodeCoordinator() {
 		this.coordinatorWaitTime = NodeManagement.getConfigFile().getProperty("CoordinatorWaitTime", 10000);
 	}
 	
@@ -32,7 +38,18 @@ public class CoordinationManager implements Runnable{
 			logger.error("Error message:" + e.getMessage());
 		}
 		
-		logger.debug("Waiting time ended, redistributing the node agents load");
+		logger.debug("Waiting time ended, redistributing the node agents load...");
+		
+		int totalLoad = 0;
+		for(Integer load : NodeManagement.getNodeAgentsLoad().values()){
+			totalLoad += load;
+		}
+		
+		// TODO build a sorted list with the nodeAgentsLoad ordered by value, and get every value 
+		// and if it's greater than the average load, migrate his agents
+		
+		CopyOnWriteArrayList<Agent> auxAgentsList = new CopyOnWriteArrayList<Agent>();
+		
 		for(String nodeId : NodeManagement.getNodeAgentsLoad().keySet()){
 			logger.debug("Processing node [" + nodeId + "] with load [" + NodeManagement.getNodeAgentsLoad().get(nodeId) + "]");
 			// TODO process them... distribute them among the other nodes
