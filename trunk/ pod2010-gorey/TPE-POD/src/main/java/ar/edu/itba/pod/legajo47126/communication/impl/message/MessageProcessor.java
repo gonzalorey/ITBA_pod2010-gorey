@@ -77,7 +77,7 @@ public class MessageProcessor implements Runnable {
 							
 							// obtaining the payload and adding the load to the node agents load map
 							NodeAgentLoadPayload payload = (NodeAgentLoadPayload) messageContainer.getMessage().getPayload();
-							NodeManagement.setNodeAgentsLoad(messageContainer.getMessage().getNodeId(), payload.getLoad());
+							NodeManagement.getNodeAgentsLoad().setNodeLoad(messageContainer.getMessage().getNodeId(), payload.getLoad());
 							logger.debug("Node [" + messageContainer.getMessage().getNodeId() + "] and load [" + payload.getLoad() + "] added to the local map");
 							break;
 							

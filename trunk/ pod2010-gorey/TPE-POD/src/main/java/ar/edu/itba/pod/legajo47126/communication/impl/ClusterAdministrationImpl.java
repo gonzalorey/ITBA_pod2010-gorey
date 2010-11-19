@@ -111,18 +111,15 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		
 		logger.debug("Initial node [" + initialNode + "] successfully added the " +
 				"local node [" + NodeManagement.getLocalNode() + "] to the group");
+
+		// start the coordinator thread
+		NewNodeCoordinator coordinatorManager = new NewNodeCoordinator();
+		new Thread(coordinatorManager).start();
 		
 		// broadcast a message saying that the local node is the new coordinator
 		logger.debug("Start coordinating, inform all the others");
 		Message message = MessageFactory.NodeAgentLoadRequestMessage();
 		ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
-		
-		// restart the nodeAgentsLoad
-		NodeManagement.resetNodeAgentsLoad();
-		
-		// start the coordinator thread
-		NewNodeCoordinator coordinatorManager = new NewNodeCoordinator();
-		new Thread(coordinatorManager).start();
 	}
 	
 	@Override
