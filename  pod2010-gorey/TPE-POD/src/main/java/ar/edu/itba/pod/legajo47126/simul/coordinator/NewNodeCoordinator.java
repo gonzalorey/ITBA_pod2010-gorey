@@ -1,14 +1,17 @@
 package ar.edu.itba.pod.legajo47126.simul.coordinator;
 
 import java.rmi.RemoteException;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
+import ar.edu.itba.pod.legajo47126.simul.SimulationManagerImpl;
 import ar.edu.itba.pod.simul.communication.AgentDescriptor;
-import ar.edu.itba.pod.simul.simulation.Agent;
+import ar.edu.itba.pod.simul.communication.Message;
+import ar.edu.itba.pod.simul.communication.NodeAgentLoad;
 
 /**
  * Class called after a NODE_AGENT_LOAD_REQUEST message was sent, in order to
@@ -33,7 +36,17 @@ public class NewNodeCoordinator implements Runnable{
 	public void run() {
 
 		// reset the node agents load
-		NodeManagement.getNodeAgentsLoad().reset();
+		NodeManagement.getNodeKnownAgentsLoad().reset();
+		
+		// broadcast a message saying that the local node is the new coordinator
+		logger.debug("Start coordinating, inform all the others");
+		Message message = MessageFactory.NodeAgentLoadRequestMessage();
+		try {
+			ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+		} catch (RemoteException e) {
+			logger.error("There was an error during the coordination broadcast");
+			logger.error("Error message:" + e.getMessage());
+		}
 		
 		// wait for the responses of the NODE_AGENTS_LOAD_REQUEST
 		try {
@@ -46,103 +59,83 @@ public class NewNodeCoordinator implements Runnable{
 		
 		logger.debug("Waiting time ended, redistributing the node agents load...");
 		
-		// TODO build a sorted list with the nodeAgentsLoad ordered by value, and get every value 
-		// and if it's greater than the average load, migrate his agents
+		// added the local node load to the list
+		NodeManagement.getNodeKnownAgentsLoad().setNodeLoad(NodeManagement.getLocalNode().getNodeId(), 
+				SimulationManagerImpl.getInstance().getAgentsLoad());
 		
-//		double loadPerNode = (double)(NodeManagement.getNodeAgentsLoad().getTotalLoad()) 
-//			/ NodeManagement.getNodeAgentsLoad().getNodesLoad().size();
-//		
-//		CopyOnWriteArrayList<Agent> remainingAgents = new CopyOnWriteArrayList<Agent>();
-//		CopyOnWriteArrayList<String> nodesLowOnAgents = new CopyOnWriteArrayList<String>();
-//		
-//		String nodeId;
-//		int numberOfNodeRemainingAgents;
-//		Iterator<String> iter = NodeManagement.getNodeAgentsLoad().getNodesLoad().keySet().iterator();
-//		if(!iter.hasNext()){
-//			return;
-//		}
-//		
-//		nodeId = iter.next();
-//		numberOfNodeRemainingAgents = NodeManagement.getNodeAgentsLoad().getNodesLoad().get(nodeId)
-//			- (int)Math.ceil(loadPerNode); 
-//		if(numberOfNodeRemainingAgents > 0){
-//			for(AgentDescriptor agentDescriptor : ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).
-//					getSimulationCommunication().migrateAgents(numberOfNodeRemainingAgents)){
-//				remainingAgents.add(agentDescriptor.build());
-//			}
-//		} else {
-//			nodesLowOnAgents.add(nodeId);
-//		}
-//		
-//		while(iter.hasNext()){
-//			nodeId = iter.next();
-//			numberOfNodeRemainingAgents = NodeManagement.getNodeAgentsLoad().getNodesLoad().get(nodeId)
-//				- (int)Math.floor(loadPerNode);
-//			if(numberOfNodeRemainingAgents > 0){
-//				for(AgentDescriptor agentDescriptor : ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).
-//						getSimulationCommunication().migrateAgents(numberOfNodeRemainingAgents)){
-//					remainingAgents.add(agentDescriptor.build());
-//				}
-//			} else {
-//				for(Agent agent : remainingAgents){
-//					// TODO give him some of the agents
-//				}
-//				nodesLowOnAgents.add(nodeId);
-//			}
-//		}
-//		
-//		for(String nodeId : NodeManagement.getNodeAgentsLoad().getNodesLoad().keySet()){
-//			if(NodeManagement.getNodeAgentsLoad().getNodesLoad().get(nodeId) > loadPerNode){
-//				
-//			}
-//				
-//		}
+		if(NodeManagement.getNodeKnownAgentsLoad().getTotalLoad() == 0 || 
+				NodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size() == 0){
+			logger.debug("No nodes to distribute the load, coordination ended");
+			return;
+		}
 		
-		int loadPerNode = NodeManagement.getNodeAgentsLoad().getTotalLoad() 
-			/ NodeManagement.getNodeAgentsLoad().getNodesLoad().size();
+		int loadPerNode = NodeManagement.getNodeKnownAgentsLoad().getTotalLoad() 
+			/ NodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size();
 	
-		CopyOnWriteArrayList<Agent> remainingAgents = new CopyOnWriteArrayList<Agent>();
-		CopyOnWriteArrayList<String> lowOnAgentsNodes = new CopyOnWriteArrayList<String>();
-		for(String nodeId : NodeManagement.getNodeAgentsLoad().getNodesLoad().keySet()){
-			int numberOfNodeRemainingAgents = NodeManagement.getNodeAgentsLoad().
-				getNodesLoad().get(nodeId) - loadPerNode;
+		ConcurrentLinkedQueue<AgentDescriptor> remainingAgents = new ConcurrentLinkedQueue<AgentDescriptor>();
+		ConcurrentLinkedQueue<NodeAgentLoad> lowOnAgentsNodes = new ConcurrentLinkedQueue<NodeAgentLoad>();
+
+		for(NodeAgentLoad nodeAgentLoad : NodeManagement.getNodeKnownAgentsLoad().getNodesLoad()){
+			int numberOfNodeRemainingAgents = nodeAgentLoad.getNumberOfAgents() - loadPerNode;
 			
 			if(numberOfNodeRemainingAgents > 0){
 				try {
 					// obtain all his agents and add them to the remaining agents list
-					for(AgentDescriptor agentDescriptor : ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).
+					for(AgentDescriptor agentDescriptor : ConnectionManagerImpl.getInstance().getConnectionManager(nodeAgentLoad.getNodeId()).
 							getSimulationCommunication().migrateAgents(numberOfNodeRemainingAgents)){
-						remainingAgents.add(agentDescriptor.build());
+						remainingAgents.add(agentDescriptor);
 					}
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					logger.error("There was an error during the migration of the node [" + nodeAgentLoad.getNodeId() + "] agents");
+					logger.error("Error message:" + e.getMessage());
 				}
 			} else if(numberOfNodeRemainingAgents < 0) {
 				// add him to the list of low on agents nodes
-				lowOnAgentsNodes.add(nodeId);
+				lowOnAgentsNodes.add(nodeAgentLoad);
 			}
 		}
 		
-		for(String nodeId : lowOnAgentsNodes){
-			int numberOfNodeRemainingAgents = NodeManagement.getNodeAgentsLoad().
-			getNodesLoad().get(nodeId) - loadPerNode;
+		for(NodeAgentLoad nodeAgentLoad : lowOnAgentsNodes){
+			int numberOfNodeRemainingAgents = loadPerNode - nodeAgentLoad.getNumberOfAgents();
 			
-			giveAgents(nodeId, numberOfNodeRemainingAgents, remainingAgents);
+			try {
+				giveAgents(nodeAgentLoad.getNodeId(), numberOfNodeRemainingAgents, remainingAgents);
+			} catch (RemoteException e) {
+				logger.debug("There was an error and the agent/s couldn't be added to the node");
+				logger.debug("Error message:" + e.getMessage());
+				
+				//TODO what should I do in this case, what to do with this remaining nodes
+			}
 		}
 		
-		if(remainingAgents.size() == 1){
-			logger.debug("One node remaining, give it to the first node");
+		if(remainingAgents.size() > 0){
+			logger.debug(remainingAgents.size() + " remaining, give them to the local node");
 			
-			giveAgents(NodeManagement.getNodeAgentsLoad().getNodesLoad().keySet().iterator().next(), 
-					remainingAgents.size(), remainingAgents);
+			try {
+				giveAgents(NodeManagement.getLocalNode().getNodeId(), remainingAgents.size(), remainingAgents);
+			} catch (RemoteException e) {
+				logger.debug("There was an error and the agent/s couldn't be added to the node");
+				logger.debug("Error message:" + e.getMessage());
+			}
 		}
 		
+		logger.debug("Coordination ended");
 	}
 
-	private void giveAgents(String nodeId, int numberOfNodeRemainingAgents, CopyOnWriteArrayList<Agent> remainingAgents) {
-		// TODO Auto-generated method stub
+	private void giveAgents(String nodeId, int numberOfNodeRemainingAgents, ConcurrentLinkedQueue<AgentDescriptor> remainingAgents) throws RemoteException {
+		logger.debug("Giving " + numberOfNodeRemainingAgents + " agents to the node [" + nodeId + "]");
 		
+		for(int i = 0; i < numberOfNodeRemainingAgents; i++){
+			// take the first agent from the queue
+			AgentDescriptor agentDescriptor = remainingAgents.peek();
+			
+			// start it in the remote node
+			ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).
+				getSimulationCommunication().startAgent(agentDescriptor);
+			
+			// remove the agent from the queue
+			remainingAgents.remove(agentDescriptor);
+		}
 	}
 
 }

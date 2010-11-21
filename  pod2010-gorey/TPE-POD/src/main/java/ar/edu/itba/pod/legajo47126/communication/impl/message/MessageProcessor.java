@@ -5,7 +5,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.impl.ClusterAdministrationImpl;
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
@@ -31,12 +30,13 @@ public class MessageProcessor implements Runnable {
 	@Override
 	public void run() {
 		while(true){
+			MessageContainer messageContainer = null;
 			try {
 				// peek the first message of the queue
-				MessageContainer messageContainer = messagesQueue.peek();
+				messageContainer = messagesQueue.peek();
 				
 				if(messageContainer != null){
-					logger.debug("Processing message [" + messageContainer + "]");
+					logger.debug("Processing message [" + messageContainer.getMessage() + "]");
 					
 					switch (messageContainer.getMessage().getType()) {
 						case DISCONNECT:
@@ -47,18 +47,22 @@ public class MessageProcessor implements Runnable {
 								logger.debug("Message successfully broadcasted");
 							} catch (RemoteException e) {
 								logger.error("The message couldn't be broadcasted");
-								logger.error("Error message:" + e.getMessage());
+								logger.error("Error message: " + e.getMessage());
 							}
 	
 							DisconnectPayload disconnectPayload = (DisconnectPayload) messageContainer.getMessage().getPayload(); 
 							try {
 								// disconnect the node
-								((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().getClusterAdmimnistration()).
-									disconnectFromGroupWithoutBroadcasting(disconnectPayload.getDisconnectedNodeId());
+								ConnectionManagerImpl.getInstance().getClusterAdmimnistration().
+									disconnectFromGroup(disconnectPayload.getDisconnectedNodeId());
 								logger.debug("Node disconnected from the local node");
+							} catch (IllegalArgumentException e) {
+								logger.info("The node didn't belong to the group");
+								logger.info("Error message: " + e.getMessage());
+								//TODO watch out with these errors, they are everywhere with the remote exceptions...
 							} catch (RemoteException e) {
 								logger.error("The node couldn't be disconnected");
-								logger.error("Error message:" + e.getMessage());
+								logger.error("Error message: " + e.getMessage());
 							}
 							break;
 						
@@ -77,7 +81,7 @@ public class MessageProcessor implements Runnable {
 							
 							// obtaining the payload and adding the load to the node agents load map
 							NodeAgentLoadPayload payload = (NodeAgentLoadPayload) messageContainer.getMessage().getPayload();
-							NodeManagement.getNodeAgentsLoad().setNodeLoad(messageContainer.getMessage().getNodeId(), payload.getLoad());
+							NodeManagement.getNodeKnownAgentsLoad().setNodeLoad(messageContainer.getMessage().getNodeId(), payload.getLoad());
 							logger.debug("Node [" + messageContainer.getMessage().getNodeId() + "] and load [" + payload.getLoad() + "] added to the local map");
 							break;
 							
@@ -89,7 +93,7 @@ public class MessageProcessor implements Runnable {
 								logger.debug("Message successfully broadcasted");
 							} catch (RemoteException e) {
 								logger.error("The message couldn't be broadcasted");
-								logger.error("Error message:" + e.getMessage());
+								logger.error("Error message: " + e.getMessage());
 							}
 							
 							logger.debug("Sending a NODE_AGENTS_LOAD message...");
@@ -100,7 +104,7 @@ public class MessageProcessor implements Runnable {
 								logger.debug("Message successfully sent");
 							} catch (RemoteException e) {
 								logger.error("The message couldn't be sent");
-								logger.error("Error message:" + e.getMessage());
+								logger.error("Error message: " + e.getMessage());
 							}
 							break;
 						
@@ -139,6 +143,7 @@ public class MessageProcessor implements Runnable {
 					
 					// remove the message from the queue (it may not be the FIRT anymore)
 					messagesQueue.remove(messageContainer);
+					messageContainer = null;
 						
 				} else {
 					
@@ -153,6 +158,10 @@ public class MessageProcessor implements Runnable {
 			} catch (Exception e) {
 				logger.error("There was an error during the message processing");
 				logger.error("Error message:" +  e.getMessage());
+				
+				// remove the message from the queue despite the error
+				if(messageContainer != null)
+					messagesQueue.remove(messageContainer);
 			}
 		}
 	}
