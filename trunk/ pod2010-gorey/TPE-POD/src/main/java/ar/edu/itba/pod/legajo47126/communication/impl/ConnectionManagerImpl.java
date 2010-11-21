@@ -17,6 +17,7 @@ import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
 import ar.edu.itba.pod.legajo47126.exceptions.WrongNodeIDException;
 import ar.edu.itba.pod.legajo47126.node.Node;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
+import ar.edu.itba.pod.legajo47126.simul.SimulationCommunicationImpl;
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
 import ar.edu.itba.pod.simul.communication.ClusterCommunication;
 import ar.edu.itba.pod.simul.communication.ConnectionManager;
@@ -27,6 +28,9 @@ import ar.edu.itba.pod.simul.communication.Transactionable;
 
 public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, RegistryPort {
 	
+	// instance of the log4j logger
+	private static Logger logger = Logger.getLogger(ConnectionManagerImpl.class);
+	
 	// singletone instance of the ConnectionManger
 	private static ConnectionManagerImpl connectionManager = null;
 	
@@ -36,14 +40,13 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 	// list of known nodes
 	private ConcurrentHashMap<String, Node> knownNodes;
 	
-	// instance of the log4j logger
-	private static Logger logger = Logger.getLogger(ConnectionManagerImpl.class);
-	
 	// ClusterAdministration instance to handle the group connections
 	private ClusterAdministration clusterAdministration;
 	
 	// MessageManager instance, that implements ClusterCommunication and MessageListener
 	private MessageManager messageManager;
+	
+	private SimulationCommunication simulationCommunication;
 	
 	private ConnectionManagerImpl() throws RemoteException{
 		UnicastRemoteObject.exportObject(this, 0);
@@ -58,6 +61,8 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		clusterAdministration = new ClusterAdministrationImpl();
 		logger.debug("Connection Administration initialized");
 		
+		simulationCommunication = new SimulationCommunicationImpl();
+			
 		// instance the kown nodes map
 		knownNodes = new ConcurrentHashMap<String, Node>();
 		
@@ -171,8 +176,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 
 	@Override
 	public SimulationCommunication getSimulationCommunication() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		return simulationCommunication;
 	}
 
 	@Override

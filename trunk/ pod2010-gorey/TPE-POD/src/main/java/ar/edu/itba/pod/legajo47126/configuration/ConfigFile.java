@@ -82,5 +82,14 @@ public class ConfigFile {
 		
 		return Double.valueOf(property);
 	}
+	
+	public boolean getProperty(String key, boolean defaultValue){
+		String property;
+		
+		if((property = this.configFile.getProperty(key)) == null)
+			return defaultValue;
+		
+		return Boolean.valueOf(property);
+	}
 
 }

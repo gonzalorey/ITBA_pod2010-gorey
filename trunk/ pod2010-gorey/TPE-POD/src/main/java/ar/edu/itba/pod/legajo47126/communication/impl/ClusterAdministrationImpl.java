@@ -8,12 +8,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
-import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewNodeCoordinator;
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
-import ar.edu.itba.pod.simul.communication.Message;
 
 public class ClusterAdministrationImpl implements ClusterAdministration, RegistryPort {
 
@@ -115,11 +113,6 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		// start the coordinator thread
 		NewNodeCoordinator coordinatorManager = new NewNodeCoordinator();
 		new Thread(coordinatorManager).start();
-		
-		// broadcast a message saying that the local node is the new coordinator
-		logger.debug("Start coordinating, inform all the others");
-		Message message = MessageFactory.NodeAgentLoadRequestMessage();
-		ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
 	}
 	
 	@Override
@@ -165,12 +158,6 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		groupNodes.remove(nodeId);
 		ConnectionManagerImpl.getInstance().getKnownNodes().remove(nodeId);
 		logger.debug("Node removed from groupNodes and knownNodes lists");
-
-		// create the DISCONNECT message
-		Message message = MessageFactory.DisconnectMessage(nodeId);
-		logger.debug("Built message [" + message + "], broadcast it");
-		
-		ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
 	}
 	
 	private CopyOnWriteArrayList<String> getRandomNodes(CopyOnWriteArrayList<String> nodes){
@@ -189,18 +176,6 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	
 	public CopyOnWriteArrayList<String> getGroupNodes(){
 		return groupNodes;
-	}
-	
-	public void disconnectFromGroupWithoutBroadcasting(String nodeId) throws RemoteException {
-		logger.debug("Disconnecting the node [" +  nodeId + "] from the group");
-		
-		if(!groupNodes.contains(nodeId))
-			throw new IllegalArgumentException("The node doesn't belong to the group");
-		
-		// remove the node from the group and the known nodes list 
-		groupNodes.remove(nodeId);
-		ConnectionManagerImpl.getInstance().getKnownNodes().remove(nodeId);
-		logger.debug("Node removed from groupNodes and knownNodes lists");
 	}
 	
 	private void addNewNodeToOtherNodes(String newNode) {
@@ -227,4 +202,8 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	 	logger.debug("Node added to " + amountAdded + " node" + ((amountAdded != 1)?"s":""));
 	}
 	
+	public void clearGroup(){
+		groupId = null;
+		groupNodes.clear();
+	}
 }

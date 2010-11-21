@@ -6,12 +6,26 @@ import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
+import ar.edu.itba.pod.legajo47126.communication.impl.ClusterAdministrationImpl;
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
+import ar.edu.itba.pod.legajo47126.simul.AgentFactory;
+import ar.edu.itba.pod.legajo47126.simul.SimulationManagerImpl;
+import ar.edu.itba.pod.legajo47126.simul.coordinator.DisconnectionCoordinator;
+import ar.edu.itba.pod.legajo47126.simul.coordinator.NewAgentCoordinator;
+import ar.edu.itba.pod.legajo47126.simul.coordinator.NewNodeCoordinator;
+import ar.edu.itba.pod.simul.communication.Message;
+import ar.edu.itba.pod.simul.simulation.Agent;
 
 public class NodeManagement {
 	
@@ -25,7 +39,7 @@ public class NodeManagement {
 	private static ConfigFile configFile;
 	
 	// load of every known node
-	private static NodeAgentsLoad nodeAgentsLoad;	// TODO should go in SimulationCommunicationImpl...
+	private static NodeKnownAgentsLoad nodeKnownAgentsLoad;	// TODO should go in SimulationCommunicationImpl...
 	
 	public static void main(String[] args) {
 		// set the basic configuration for the logger, so everything goes to stdout
@@ -51,9 +65,6 @@ public class NodeManagement {
 			else
 				localNode = new Node();
 			logger.info("Node '" + localNode + "' started successfully");
-			
-			// TODO add dynamically
-			localNode.setLoad(configFile.getProperty("InitialLoadAmount", 5));
 		} catch (UnknownHostException e) {
 			logger.fatal("The local node couldn't be started. Aborting execution");
 			logger.fatal("Error message:" + e.getMessage());
@@ -64,7 +75,7 @@ public class NodeManagement {
 		}
 		
 		// instance the node agents load
-		nodeAgentsLoad = new NodeAgentsLoad();
+		nodeKnownAgentsLoad = new NodeKnownAgentsLoad();
 		
 		// create the connection manager
 		try {
@@ -97,107 +108,208 @@ public class NodeManagement {
 		return configFile;
 	}
 
-	// console commands
-	private enum Commands{CONNECT_GROUP, CREATE_GROUP, SEND, DISCONNECT, EXIT, WRONG_COMMAND}
+	// command line parser
+	static CommandLineParser cmdParser = new GnuParser();
+	static Options options = new Options();
 	
+	// console command options
+	static Option connect;
+	static Option creategroup;
+	static Option createagent;
+	static Option getload;
+	static Option getknownnodes;	// TODO should dissapear
+	static Option getgroupnodes;	// TODO should dissapear
+	static Option send;				// TODO should dissapear
+	static Option disconnect;		// TODO should dissapear
+	static Option exit;
+	
+	private static void startOptions(){
+		cmdParser = new GnuParser();
+		options = new Options();
+		
+		connect = new Option("connect", "Connect to a node");
+		connect.setArgs(1);
+		
+		creategroup = new Option("creategroup", "Creates a group");
+		
+		createagent = new Option("createagent", "Creates an agent");
+		createagent.setArgs(1);
+		createagent.setOptionalArg(true);
+		
+		getload = new Option("getload", "Get the node agents load");
+		
+		getknownnodes = new Option("getknownnodes", "Lists the known nodes (whose connection managers are stored)");
+		
+		getgroupnodes = new Option("getgroupnodes", "Lists the group nodes");
+		
+		send = new Option("send", "Sends a peer-2-peer message");
+		send.setArgs(1);
+		
+		disconnect = new Option("disconnect", "Disconnect the node");
+		
+		exit = new Option("exit", "Exit the application");
+		
+		options.addOption(connect);
+		options.addOption(creategroup);
+		options.addOption(createagent);
+		options.addOption(getload);
+		options.addOption(getknownnodes);
+		options.addOption(getgroupnodes);
+		options.addOption(send);
+		options.addOption(disconnect);
+		options.addOption(exit);
+
+	}
 	
 	public static void console(){
+	
+		// start the command line options
+		startOptions();
 	
 		// reader from the standard input stream
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		
 		while(true){
-			
-			System.out.print(">");
-			
-			// read the line
-			String line;
 			try {
-				line = br.readLine();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return;
-			}
-			
-			// get the inserted command
-			Commands command;
-			if(line.startsWith("connect "))
-				command = Commands.CONNECT_GROUP;
-			else if(line.startsWith("create "))
-				command = Commands.CREATE_GROUP;
-			else if(line.startsWith("send "))
-				command = Commands.SEND;
-			else if(line.startsWith("disconnect "))
-				command = Commands.DISCONNECT;
-			else if(line.startsWith("exit"))
-				return;
-			else
-				command = Commands.WRONG_COMMAND;
-			
-			switch (command) {
-				case CONNECT_GROUP:
-					try {
-						String nodeId = line.split(" ")[1];
-						logger.info("Connecting to " + nodeId);
+				System.out.print(">");
+				
+				String line = br.readLine();
+				String args[] = line.split(" ");
+
+				// command line reader
+				CommandLine cmd = cmdParser.parse(options, args);
+				
+				if(cmd.hasOption(connect.getOpt())){
+					String nodeId = cmd.getOptionValue(connect.getOpt());
+					try{
+						logger.info("Connecting to [" + nodeId + "]...");
 						ConnectionManagerImpl.getInstance().getClusterAdmimnistration().connectToGroup(nodeId);
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						logger.error("There was an error during the connection to the node " + nodeId);
+						logger.error("Error message:" + e.getMessage());
 					}
-					break;
-					
-				case CREATE_GROUP:
-					try {
+				} 
+
+				if(cmd.hasOption(disconnect.getOpt())){
+					try{
+						new DisconnectionCoordinator().run();
+						
+						// create the DISCONNECT message
+						Message message = MessageFactory.DisconnectMessage(NodeManagement.getLocalNode().getNodeId());
+						logger.debug("Built message [" + message + "], broadcast it");
+						
+						// broadcast the messsage
+						ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+						
+						// clears the group data
+						((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().getClusterAdmimnistration()).clearGroup();
+						
+					} catch (RemoteException e) {
+						logger.error("There was an error during the disconnection of the node");
+						logger.error("Error message:" + e.getMessage());
+					}
+				} 
+				
+				if(cmd.hasOption(creategroup.getOpt())){
+					try{
 						logger.info("Creating group...");
 						ConnectionManagerImpl.getInstance().getClusterAdmimnistration().createGroup();
 						String groupId = ConnectionManagerImpl.getInstance().getClusterAdmimnistration().getGroupId();
 						logger.info("Group " + groupId + " created successfully");
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						logger.error("There was an error during the creation of the node group");
+						logger.error("Error message:" + e.getMessage());
 					}
-					break;
+				}
 				
-				case SEND:
-					try {
-						String nodeId = line.split(" ")[1];
-						logger.info("Sending a message to node [" +  nodeId + "]");
-						ConnectionManagerImpl.getInstance().getGroupCommunication().
-							send(MessageFactory.NewMessageRequest(), nodeId);
-					} catch (Exception e) {
-						logger.error("There was an error during the message sending");
+				if(cmd.hasOption(createagent.getOpt())){
+					logger.info("Creating an agent...");
+
+					int numberOfAgents = 1;
+					if(cmd.getOptionValue(createagent.getOpt()) != null) {
+						numberOfAgents = Integer.valueOf(cmd.getOptionValue(createagent.getOpt()));
+					}
+					
+					if(numberOfAgents == 1){
+						Agent agent = AgentFactory.CreateAgent();
+						Thread thread = new Thread(new NewAgentCoordinator(agent));
+						thread.start();
+					} else {
+						try{
+							for(int i = 0; i < numberOfAgents; i++){
+								Agent agent = AgentFactory.CreateAgent();
+								ConnectionManagerImpl.getInstance().getSimulationCommunication().startAgent(agent.getAgentDescriptor());
+								logger.info("Agent " + agent + " successfully added to the node");
+							}
+							
+							Thread thread = new Thread(new NewNodeCoordinator());
+							thread.start();
+						} catch (RemoteException e) {
+							logger.error("There was an error during the creation of the agent");
+							logger.error("Error message:" + e.getMessage());
+						}
+					}
+				} 
+				
+				if(cmd.hasOption(getload.getOpt())){
+					logger.info("Getting the node agents load...");
+					int load = SimulationManagerImpl.getInstance().getAgentsLoad();
+					logger.info("Node agents load " + load);
+				}
+				
+				if(cmd.hasOption(getknownnodes.getOpt())){
+					logger.info("Getting the known nodes list...");
+					
+					if(ConnectionManagerImpl.getInstance().getKnownNodes().size() == 0)
+						logger.info("There are no known nodes");
+					
+					for(String nodeId : ConnectionManagerImpl.getInstance().getKnownNodes().keySet()){
+						logger.info(nodeId);
+					}
+				}
+				
+				if(cmd.hasOption(getgroupnodes.getOpt())){
+					logger.info("Getting the group nodes list...");
+					
+					if(((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().
+							getClusterAdmimnistration()).getGroupNodes().size() == 0)
+						logger.info("There are no group nodes");
+					
+					for(String nodeId : ((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().
+							getClusterAdmimnistration()).getGroupNodes()){
+						logger.info(nodeId);
+					}
+				}
+
+				if(cmd.hasOption(send.getOpt())){
+					String nodeId = cmd.getOptionValue(send.getOpt()); 
+					try{
+						logger.info("Sending a message to node [" +  nodeId + "]...");
+						ConnectionManagerImpl.getInstance().getGroupCommunication().send(MessageFactory.NewMessageRequest(), nodeId);
+					} catch (RemoteException e) {
+						logger.error("There was an error during the disconnection of the node " + nodeId);
 						logger.error("Error message:" + e.getMessage());
 					}
+				} 
+
+				if(cmd.hasOption(exit.getOpt())){
+					logger.info("Exiting...");
 					break;
-		
-				case DISCONNECT:
-					try {
-						String nodeId = line.split(" ")[1];
-						logger.info("Disconnecting the node [" + nodeId + "]");
-						ConnectionManagerImpl.getInstance().getClusterAdmimnistration().disconnectFromGroup(nodeId);
-					} catch (Exception e) {
-						logger.error("There was an error during the disconnection of the node");
-						logger.error("Error message:" + e.getMessage());
-					}
-					break;
-					
-				case EXIT:
-					logger.info("EXIT: " + line);
-					return;
-					
-				case WRONG_COMMAND:
-					logger.info("Wrong command, try again");
-					break;
-					
-				default:
-					// do nothing
+				}
+				
+				
+			} catch (IOException e) {
+				logger.error("There was an error, please try again");
+				logger.error("Error message:" + e.getMessage());
+			} catch (ParseException e) {
+				logger.info("Wrong command");
 			}
 		}
+		
 	}
 	
-	public static NodeAgentsLoad getNodeAgentsLoad(){
-		return nodeAgentsLoad;
+	public static NodeKnownAgentsLoad getNodeKnownAgentsLoad(){
+		return nodeKnownAgentsLoad;
 	}
 	
 }

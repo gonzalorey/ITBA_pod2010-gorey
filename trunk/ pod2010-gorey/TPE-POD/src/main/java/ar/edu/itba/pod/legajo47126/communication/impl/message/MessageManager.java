@@ -65,7 +65,8 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 				if(!ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).getGroupCommunication()
 						.getListener().onMessageArrive(message)){
 					// lowering the gossip probability
-					gossipProbability -= 1/ConnectionManagerImpl.getInstance().getKnownNodes().size();
+					gossipProbability -= 1/((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().
+							getClusterAdmimnistration()).getGroupNodes().size();
 					logger.debug("Gossip probability lowered to " + gossipProbability);
 				} else {
 					// set the synchronization time of the node
@@ -83,6 +84,8 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		// add the message to the broadcasted messages queue
 		broadcastedMessagesQueue.add(new MessageContainer(message));
 		logger.debug("Message added to the broadcasted messages queue");
+		
+		logger.debug("Broadcasting ended");
 	}
 	
 	@Override
@@ -159,7 +162,9 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		new Thread(messageProcessor).start();
 		
 		// start the message requester to get the new messages from every group node
-		MessageRequester messageRequester = new MessageRequester();
-		new Thread(messageRequester).start();
+		if(NodeManagement.getConfigFile().getProperty("MessageRequesterEnabled", false)){
+			MessageRequester messageRequester = new MessageRequester();
+			new Thread(messageRequester).start();
+		}
 	}
 }
