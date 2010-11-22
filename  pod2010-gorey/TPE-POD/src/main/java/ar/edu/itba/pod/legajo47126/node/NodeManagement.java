@@ -26,6 +26,7 @@ import ar.edu.itba.pod.legajo47126.simul.coordinator.DisconnectionCoordinator;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewAgentCoordinator;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewNodeCoordinator;
 import ar.edu.itba.pod.simul.communication.Message;
+import ar.edu.itba.pod.simul.market.Resource;
 import ar.edu.itba.pod.simul.simulation.Agent;
 
 public class NodeManagement {
@@ -119,6 +120,7 @@ public class NodeManagement {
 	private static Option creategroup;
 	private static Option createagent;
 	private static Option getload;
+	private static Option requestresource;
 	private static Option getknownnodes;	// TODO should dissapear
 	private static Option getgroupnodes;	// TODO should dissapear
 	private static Option send;				// TODO should dissapear
@@ -133,23 +135,30 @@ public class NodeManagement {
 		
 		connect = new Option("connect", "Connect to a node");
 		connect.setArgs(1);
+		connect.setArgName("nodeId");
 		
-		disconnect = new Option("disconnect", "Disconnect the node");
+		disconnect = new Option("disconnect", "Disconnect from the group");
 		
 		creategroup = new Option("creategroup", "Creates a group");
 		
 		createagent = new Option("createagent", "Creates an agent");
 		createagent.setArgs(1);
+		createagent.setArgName("numberOfAgents");
 		createagent.setOptionalArg(true);
 		
 		getload = new Option("getload", "Get the node agents load");
 		
-		getknownnodes = new Option("getknownnodes", "Lists the known nodes (whose connection managers are stored)");
+		requestresource = new Option("requestresource", "Requests a resource");
+		requestresource.setArgs(1);
+		requestresource.setArgName("nodeId");
+		
+		getknownnodes = new Option("getknownnodes", "Lists the known nodes");
 		
 		getgroupnodes = new Option("getgroupnodes", "Lists the group nodes");
 		
 		send = new Option("send", "Sends a peer-2-peer message");
 		send.setArgs(1);
+		send.setArgName("nodeId");
 		
 		help = new Option("help", "Prints the help commands");
 		
@@ -160,6 +169,7 @@ public class NodeManagement {
 		options.addOption(creategroup);
 		options.addOption(createagent);
 		options.addOption(getload);
+		options.addOption(requestresource);
 		options.addOption(getknownnodes);
 		options.addOption(getgroupnodes);
 		options.addOption(send);
@@ -172,6 +182,8 @@ public class NodeManagement {
 	
 		// start the command line options
 		startOptions();
+		
+		helpFormatter.printHelp("-command_name [args]", options);
 	
 		// reader from the standard input stream
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -254,6 +266,43 @@ public class NodeManagement {
 					logger.info("Getting the node agents load...");
 					int load = SimulationManagerImpl.getInstance().getAgentsLoad();
 					logger.info("Node agents load " + load);
+				} else if(cmd.hasOption(requestresource.getOpt())){
+					// get the node to communicate to
+					String remoteNodeId = cmd.getOptionValue(requestresource.getOpt());
+					
+					// create the resource and it's amount
+					Resource resource = new Resource("Mineral", "Pig Iron");		//TODO hardcoded, take it OUT
+					int amount = 2;
+					
+					long timeout = configFile.getProperty("TransactionTimeout", 1000);
+					
+					try{
+						// begin the transaction with the remote node
+						logger.info("Beginning transaction with [" + remoteNodeId + "] with a timeout [" + timeout + "]");
+						ConnectionManagerImpl.getInstance().getNodeCommunication().beginTransaction(remoteNodeId, timeout);
+						
+						// exchange my resources
+						logger.info("Exchanging an amount of [" + amount + "] of resource [" + resource + "]");
+						ConnectionManagerImpl.getInstance().getNodeCommunication().exchange(resource, amount, 
+								NodeManagement.getLocalNode().getNodeId(), remoteNodeId);
+												
+						// end the transaction
+						logger.info("Ending the transaction");
+						ConnectionManagerImpl.getInstance().getNodeCommunication().endTransaction();
+					} catch (Exception e) {
+						logger.error("There was an error during the transaction, aborting...");
+						logger.error("Error message: " + e.getMessage());
+						
+						try{
+							// rollback the transactions
+							logger.info("Rollback the transaction");
+							ConnectionManagerImpl.getInstance().getNodeCommunication().rollback();
+						} catch (Exception e1) {
+							logger.error("There was an error during the transaction abort");
+							logger.error("Error message: " + e1.getMessage());
+						}
+					}
+					
 				} else if(cmd.hasOption(getknownnodes.getOpt())){
 					logger.info("Getting the known nodes list...");
 					
@@ -285,10 +334,12 @@ public class NodeManagement {
 					}
 				} else if(cmd.hasOption(help.getOpt())){
 					logger.info("Printing the help...");
-					helpFormatter.printHelp("PUT SOMETHING HERE...", options);	// TODO put something good
+					helpFormatter.printHelp("-command_name [args]", options);
 				} else if(cmd.hasOption(exit.getOpt())){
 					logger.info("Exiting...");
 					break;
+				} else{
+					logger.info("Wrong command, type -help for more information");
 				}
 				
 				
@@ -296,7 +347,7 @@ public class NodeManagement {
 				logger.error("There was an error, please try again");
 				logger.error("Error message:" + e.getMessage());
 			} catch (ParseException e) {
-				logger.info("Wrong command");
+				logger.info("Wrong command, type -help for more information");
 			}
 		}
 		

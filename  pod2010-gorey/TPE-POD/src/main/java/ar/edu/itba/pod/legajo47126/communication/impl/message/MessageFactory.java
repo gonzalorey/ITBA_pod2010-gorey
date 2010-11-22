@@ -87,10 +87,7 @@ public class MessageFactory {
 				MessageType.NODE_MARKET_DATA_REQUEST, new NodeMarketDataRequestPayloadImpl());
 	}
 	
-	public static Message ResourceRequestMessage(){
-		Resource resource = null;	//TODO get the propper values
-		int amountRequested = 0;
-		
+	public static Message ResourceRequestMessage(Resource resource, int amountRequested){
 		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
 				MessageType.RESOURCE_REQUEST, new ResourceRequestPayloadImpl(resource, amountRequested));
 	}
