@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageManager;
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
+import ar.edu.itba.pod.legajo47126.communication.transaction.TransactionManager;
 import ar.edu.itba.pod.legajo47126.exceptions.WrongNodeIDException;
 import ar.edu.itba.pod.legajo47126.node.Node;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
@@ -48,6 +49,8 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 	
 	private SimulationCommunication simulationCommunication;
 	
+	private TransactionManager transactionManager;
+	
 	private ConnectionManagerImpl() throws RemoteException{
 		UnicastRemoteObject.exportObject(this, 0);
 		logger.debug("Instantiating the Connection Manager...");
@@ -62,6 +65,8 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		logger.debug("Connection Administration initialized");
 		
 		simulationCommunication = new SimulationCommunicationImpl();
+		
+		transactionManager = new TransactionManager();
 			
 		// instance the kown nodes map
 		knownNodes = new ConcurrentHashMap<String, Node>();
@@ -170,8 +175,9 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 
 	@Override
 	public Transactionable getNodeCommunication() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		
+		// TODO see the noAvailableConnectionException thing... :(
+		return transactionManager;
 	}
 
 	@Override

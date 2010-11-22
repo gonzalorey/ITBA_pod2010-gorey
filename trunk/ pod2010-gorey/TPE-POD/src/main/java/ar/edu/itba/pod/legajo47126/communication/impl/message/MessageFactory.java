@@ -10,12 +10,12 @@ import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NodeAgentLoadReques
 import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NodeMarketDataPayloadImpl;
 import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NodeMarketDataRequestPayloadImpl;
 import ar.edu.itba.pod.legajo47126.communication.paylod.impl.ResourceRequestPayloadImpl;
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.ResourceTransferMessagePayloadImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.legajo47126.simul.SimulationManagerImpl;
 import ar.edu.itba.pod.simul.communication.MarketData;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.MessageType;
+import ar.edu.itba.pod.simul.communication.payload.Payload;
 import ar.edu.itba.pod.simul.market.Resource;
 
 public class MessageFactory {
@@ -95,13 +95,8 @@ public class MessageFactory {
 				MessageType.RESOURCE_REQUEST, new ResourceRequestPayloadImpl(resource, amountRequested));
 	}
 	
-	public static Message ResourceTransferMessage(){
-		Resource resource = null;	//TODO get the propper values
-		int amount = 0;
-		String source = null;
-		String destination = null;
-	
+	public static Message ResourceTransferMessage(Payload payload){
 		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
-				MessageType.RESOURCE_TRANSFER, new ResourceTransferMessagePayloadImpl(resource, amount, source, destination));
+				MessageType.RESOURCE_TRANSFER, payload);
 	}
 }
