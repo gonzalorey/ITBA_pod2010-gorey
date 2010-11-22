@@ -10,7 +10,7 @@ import ar.edu.itba.pod.simul.units.SimpleProducer;
 
 public class AgentFactory {
 	public static Agent CreateAgent(){
-		Resource pigIron = new Resource("Mineral", "Pig Iron");
+		Resource pigIron = new Resource("Mineral", "Pig Iron");		// TODO hardcoded....
 		
 		return SimpleProducer.named(String.valueOf(new DateTime().getMillis())).
 			producing(2).of(pigIron).every(12, TimeUnit.HOURS).build();

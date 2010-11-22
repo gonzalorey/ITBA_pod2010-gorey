@@ -187,8 +187,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 
 	@Override
 	public ThreePhaseCommit getThreePhaseCommit() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		return transactionManager.getThreePhaseCommit();
 	}
 	
 	public ConcurrentHashMap<String, Node> getKnownNodes(){
