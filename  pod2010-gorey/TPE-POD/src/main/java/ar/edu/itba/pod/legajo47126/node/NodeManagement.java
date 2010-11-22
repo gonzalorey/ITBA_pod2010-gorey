@@ -9,6 +9,7 @@ import java.rmi.RemoteException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -109,26 +110,31 @@ public class NodeManagement {
 	}
 
 	// command line parser
-	static CommandLineParser cmdParser = new GnuParser();
-	static Options options = new Options();
+	private static CommandLineParser cmdParser;
+	private static Options options;
+	private static HelpFormatter helpFormatter;
 	
 	// console command options
-	static Option connect;
-	static Option creategroup;
-	static Option createagent;
-	static Option getload;
-	static Option getknownnodes;	// TODO should dissapear
-	static Option getgroupnodes;	// TODO should dissapear
-	static Option send;				// TODO should dissapear
-	static Option disconnect;		// TODO should dissapear
-	static Option exit;
+	private static Option connect;
+	private static Option creategroup;
+	private static Option createagent;
+	private static Option getload;
+	private static Option getknownnodes;	// TODO should dissapear
+	private static Option getgroupnodes;	// TODO should dissapear
+	private static Option send;				// TODO should dissapear
+	private static Option disconnect;		// TODO should dissapear
+	private static Option help;
+	private static Option exit;
 	
 	private static void startOptions(){
 		cmdParser = new GnuParser();
 		options = new Options();
+		helpFormatter = new HelpFormatter();
 		
 		connect = new Option("connect", "Connect to a node");
 		connect.setArgs(1);
+		
+		disconnect = new Option("disconnect", "Disconnect the node");
 		
 		creategroup = new Option("creategroup", "Creates a group");
 		
@@ -145,18 +151,19 @@ public class NodeManagement {
 		send = new Option("send", "Sends a peer-2-peer message");
 		send.setArgs(1);
 		
-		disconnect = new Option("disconnect", "Disconnect the node");
+		help = new Option("help", "Prints the help commands");
 		
 		exit = new Option("exit", "Exit the application");
 		
 		options.addOption(connect);
+		options.addOption(disconnect);
 		options.addOption(creategroup);
 		options.addOption(createagent);
 		options.addOption(getload);
 		options.addOption(getknownnodes);
 		options.addOption(getgroupnodes);
 		options.addOption(send);
-		options.addOption(disconnect);
+		options.addOption(help);
 		options.addOption(exit);
 
 	}
@@ -188,9 +195,7 @@ public class NodeManagement {
 						logger.error("There was an error during the connection to the node " + nodeId);
 						logger.error("Error message:" + e.getMessage());
 					}
-				} 
-
-				if(cmd.hasOption(disconnect.getOpt())){
+				} else if(cmd.hasOption(disconnect.getOpt())){
 					try{
 						new DisconnectionCoordinator().run();
 						
@@ -208,9 +213,7 @@ public class NodeManagement {
 						logger.error("There was an error during the disconnection of the node");
 						logger.error("Error message:" + e.getMessage());
 					}
-				} 
-				
-				if(cmd.hasOption(creategroup.getOpt())){
+				} else if(cmd.hasOption(creategroup.getOpt())){
 					try{
 						logger.info("Creating group...");
 						ConnectionManagerImpl.getInstance().getClusterAdmimnistration().createGroup();
@@ -220,9 +223,7 @@ public class NodeManagement {
 						logger.error("There was an error during the creation of the node group");
 						logger.error("Error message:" + e.getMessage());
 					}
-				}
-				
-				if(cmd.hasOption(createagent.getOpt())){
+				} else if(cmd.hasOption(createagent.getOpt())){
 					logger.info("Creating an agent...");
 
 					int numberOfAgents = 1;
@@ -249,15 +250,11 @@ public class NodeManagement {
 							logger.error("Error message:" + e.getMessage());
 						}
 					}
-				} 
-				
-				if(cmd.hasOption(getload.getOpt())){
+				} else if(cmd.hasOption(getload.getOpt())){
 					logger.info("Getting the node agents load...");
 					int load = SimulationManagerImpl.getInstance().getAgentsLoad();
 					logger.info("Node agents load " + load);
-				}
-				
-				if(cmd.hasOption(getknownnodes.getOpt())){
+				} else if(cmd.hasOption(getknownnodes.getOpt())){
 					logger.info("Getting the known nodes list...");
 					
 					if(ConnectionManagerImpl.getInstance().getKnownNodes().size() == 0)
@@ -266,9 +263,7 @@ public class NodeManagement {
 					for(String nodeId : ConnectionManagerImpl.getInstance().getKnownNodes().keySet()){
 						logger.info(nodeId);
 					}
-				}
-				
-				if(cmd.hasOption(getgroupnodes.getOpt())){
+				} else if(cmd.hasOption(getgroupnodes.getOpt())){
 					logger.info("Getting the group nodes list...");
 					
 					if(((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().
@@ -279,9 +274,7 @@ public class NodeManagement {
 							getClusterAdmimnistration()).getGroupNodes()){
 						logger.info(nodeId);
 					}
-				}
-
-				if(cmd.hasOption(send.getOpt())){
+				} else if(cmd.hasOption(send.getOpt())){
 					String nodeId = cmd.getOptionValue(send.getOpt()); 
 					try{
 						logger.info("Sending a message to node [" +  nodeId + "]...");
@@ -290,9 +283,10 @@ public class NodeManagement {
 						logger.error("There was an error during the disconnection of the node " + nodeId);
 						logger.error("Error message:" + e.getMessage());
 					}
-				} 
-
-				if(cmd.hasOption(exit.getOpt())){
+				} else if(cmd.hasOption(help.getOpt())){
+					logger.info("Printing the help...");
+					helpFormatter.printHelp("PUT SOMETHING HERE...", options);	// TODO put something good
+				} else if(cmd.hasOption(exit.getOpt())){
 					logger.info("Exiting...");
 					break;
 				}
