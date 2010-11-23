@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.simul;
+package ar.edu.itba.pod.legajo47126.simulation;
 
 import java.util.Collection;
 import java.util.LinkedList;

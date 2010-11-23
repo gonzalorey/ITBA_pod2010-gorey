@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.simul;
+package ar.edu.itba.pod.legajo47126.simulation;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -8,7 +8,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.node.NodeKnownAgentsLoad;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.AgentDescriptor;
 import ar.edu.itba.pod.simul.communication.NodeAgentLoad;
@@ -60,8 +59,6 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 	
 	@Override
 	public void nodeLoadModified(NodeAgentLoad newLoad) throws RemoteException {
-		// TODO Auto-generated method stub
-		
 		// Gustavo a Xin: Lo deberías usar si es que estas usando bully y un único coordinador... 
 		// caso estes usando la metodología de un coordinador por evento, este método no te haría mucha falta.
 	}

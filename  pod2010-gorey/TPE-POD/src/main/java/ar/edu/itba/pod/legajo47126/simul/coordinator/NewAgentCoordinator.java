@@ -5,9 +5,9 @@ import java.rmi.RemoteException;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
-import ar.edu.itba.pod.legajo47126.node.NodeKnownAgentsLoad;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
-import ar.edu.itba.pod.legajo47126.simul.SimulationCommunicationImpl;
+import ar.edu.itba.pod.legajo47126.simulation.NodeKnownAgentsLoad;
+import ar.edu.itba.pod.legajo47126.simulation.SimulationCommunicationImpl;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.NodeAgentLoad;
 import ar.edu.itba.pod.simul.simulation.Agent;

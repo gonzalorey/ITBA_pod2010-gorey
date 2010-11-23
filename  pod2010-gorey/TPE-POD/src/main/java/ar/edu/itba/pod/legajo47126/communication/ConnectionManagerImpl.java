@@ -18,7 +18,7 @@ import ar.edu.itba.pod.legajo47126.communication.transaction.TransactionManager;
 import ar.edu.itba.pod.legajo47126.exceptions.WrongNodeIDException;
 import ar.edu.itba.pod.legajo47126.node.Node;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
-import ar.edu.itba.pod.legajo47126.simul.SimulationCommunicationImpl;
+import ar.edu.itba.pod.legajo47126.simulation.SimulationCommunicationImpl;
 import ar.edu.itba.pod.simul.communication.ClusterAdministration;
 import ar.edu.itba.pod.simul.communication.ClusterCommunication;
 import ar.edu.itba.pod.simul.communication.ConnectionManager;

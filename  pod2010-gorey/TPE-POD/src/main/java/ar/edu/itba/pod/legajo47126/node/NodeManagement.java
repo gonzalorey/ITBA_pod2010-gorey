@@ -9,8 +9,8 @@ import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
-import ar.edu.itba.pod.legajo47126.simul.MarketManagerImpl;
-import ar.edu.itba.pod.legajo47126.simul.SimulationManagerImpl;
+import ar.edu.itba.pod.legajo47126.market.MarketManagerImpl;
+import ar.edu.itba.pod.legajo47126.simulation.SimulationManagerImpl;
 import ar.edu.itba.pod.simul.communication.ConnectionManager;
 import ar.edu.itba.pod.simul.market.Market;
 import ar.edu.itba.pod.simul.market.MarketManager;

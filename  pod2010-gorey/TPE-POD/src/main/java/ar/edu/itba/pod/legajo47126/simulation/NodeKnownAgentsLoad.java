@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.node;
+package ar.edu.itba.pod.legajo47126.simulation;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
