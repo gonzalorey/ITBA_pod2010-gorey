@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.communication.impl;
+package ar.edu.itba.pod.legajo47126.communication;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;

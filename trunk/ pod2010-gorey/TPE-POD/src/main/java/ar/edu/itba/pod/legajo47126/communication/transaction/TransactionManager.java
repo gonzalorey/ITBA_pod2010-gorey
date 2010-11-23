@@ -7,7 +7,7 @@ import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.ThreePhaseCommit;
 import ar.edu.itba.pod.simul.communication.Transactionable;

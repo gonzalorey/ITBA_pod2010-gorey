@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.communication.impl.message;
+package ar.edu.itba.pod.legajo47126.communication.message;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -9,8 +9,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
-import ar.edu.itba.pod.legajo47126.communication.impl.ClusterAdministrationImpl;
-import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.communication.ClusterAdministrationImpl;
+import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.ClusterCommunication;
 import ar.edu.itba.pod.simul.communication.Message;

@@ -17,9 +17,9 @@ import org.apache.commons.cli.ParseException;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.impl.ClusterAdministrationImpl;
-import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
-import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
+import ar.edu.itba.pod.legajo47126.communication.ClusterAdministrationImpl;
+import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
 import ar.edu.itba.pod.legajo47126.simul.AgentFactory;
 import ar.edu.itba.pod.legajo47126.simul.MarketManagerImpl;

@@ -1,15 +1,15 @@
-package ar.edu.itba.pod.legajo47126.communication.impl.message;
+package ar.edu.itba.pod.legajo47126.communication.message;
 
 import org.joda.time.DateTime;
 
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.DisconnectPayloadImpl;
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NewMessageRequestPayloadImpl;
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NewMessageResponsePayloadImpl;
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NodeAgentLoadPayloadImpl;
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NodeAgentLoadRequestPayloadImpl;
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NodeMarketDataPayloadImpl;
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NodeMarketDataRequestPayloadImpl;
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.ResourceRequestPayloadImpl;
+import ar.edu.itba.pod.legajo47126.communication.paylod.DisconnectPayloadImpl;
+import ar.edu.itba.pod.legajo47126.communication.paylod.NewMessageRequestPayloadImpl;
+import ar.edu.itba.pod.legajo47126.communication.paylod.NewMessageResponsePayloadImpl;
+import ar.edu.itba.pod.legajo47126.communication.paylod.NodeAgentLoadPayloadImpl;
+import ar.edu.itba.pod.legajo47126.communication.paylod.NodeAgentLoadRequestPayloadImpl;
+import ar.edu.itba.pod.legajo47126.communication.paylod.NodeMarketDataPayloadImpl;
+import ar.edu.itba.pod.legajo47126.communication.paylod.NodeMarketDataRequestPayloadImpl;
+import ar.edu.itba.pod.legajo47126.communication.paylod.ResourceRequestPayloadImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.MarketData;
 import ar.edu.itba.pod.simul.communication.Message;
