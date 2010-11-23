@@ -27,7 +27,7 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 	public void startAgent(AgentDescriptor descriptor) throws RemoteException {
 		logger.debug("Starting agent [" +  descriptor + "]...");
 		
-		SimulationManagerImpl.getInstance().addAgent(descriptor.build());
+		NodeManagement.getSimulationManager().addAgent(descriptor.build());
 		logger.debug("Agent [" + descriptor + "] added to the node simulation");
 	}
 
@@ -60,7 +60,7 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 		
 		Collection<AgentDescriptor> migratingAgents = new CopyOnWriteArrayList<AgentDescriptor>();
 		for(int i = 0; i < numberOfAgents; i++){
-			Agent agent = SimulationManagerImpl.getInstance().getAgentsLoadQueue().remove();
+			Agent agent = NodeManagement.getSimulationManager().getAgentsLoadQueue().remove();
 			migratingAgents.add(agent.getAgentDescriptor());
 			logger.debug("Agent [" + agent + "] removed from the node simulation");
 		}

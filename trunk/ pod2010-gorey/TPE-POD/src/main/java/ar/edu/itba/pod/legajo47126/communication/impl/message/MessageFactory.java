@@ -11,7 +11,6 @@ import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NodeMarketDataPaylo
 import ar.edu.itba.pod.legajo47126.communication.paylod.impl.NodeMarketDataRequestPayloadImpl;
 import ar.edu.itba.pod.legajo47126.communication.paylod.impl.ResourceRequestPayloadImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
-import ar.edu.itba.pod.legajo47126.simul.SimulationManagerImpl;
 import ar.edu.itba.pod.simul.communication.MarketData;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.MessageType;
@@ -59,7 +58,7 @@ public class MessageFactory {
 	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
 	 */
 	public static Message NodeAgentLoadMessage(){
-		int load = SimulationManagerImpl.getInstance().getAgentsLoad();
+		int load = NodeManagement.getSimulationManager().getAgentsLoad();
 		
 		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
 				MessageType.NODE_AGENTS_LOAD, new NodeAgentLoadPayloadImpl(load));

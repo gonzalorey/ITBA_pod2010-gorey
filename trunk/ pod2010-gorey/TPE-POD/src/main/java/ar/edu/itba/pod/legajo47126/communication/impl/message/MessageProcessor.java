@@ -242,14 +242,14 @@ public class MessageProcessor implements Runnable {
 			// it was me the destination node, I should add the resources
 			logger.info("Adding to the market an amount of [" + payload.getAmount() + "] of resource [" 
 					+ payload.getResource() + "]...");
-			NodeManagement.getManagerImpl().market().addToRemoteSelling(payload.getResource(), payload.getAmount());
+			NodeManagement.getMarketManager().market().addToRemoteSelling(payload.getResource(), payload.getAmount());
 			logger.debug("Resources added successfully");
 			
 		} else {
 			// it wasn't me the destination, so I should remove the resources
 			logger.info("Removing from the market an amount of [" + payload.getAmount() + "] of resource [" 
 					+ payload.getResource() + "]...");
-			NodeManagement.getManagerImpl().market().removeFromSelling(payload.getResource(), payload.getAmount());
+			NodeManagement.getMarketManager().market().removeFromSelling(payload.getResource(), payload.getAmount());
 			logger.debug("Resources removed successfully");
 		}
 	}

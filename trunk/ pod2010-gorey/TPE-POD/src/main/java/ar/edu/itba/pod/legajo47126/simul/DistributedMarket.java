@@ -23,6 +23,26 @@ public class DistributedMarket extends LocalMarket {
 	protected final Multiset<ResourceStock> remoteSelling = ConcurrentHashMultiset.create();
 	
 	@Override
+	public void offer(ResourceStock stock, int maxQuantity) {
+		super.offer(stock, maxQuantity);
+	}
+	
+	@Override
+	public void offerMore(ResourceStock stock, int amount) {
+		super.offerMore(stock, amount);
+	}
+	
+	@Override
+	public void request(ResourceStock stock, int maxQuantity) {
+		super.request(stock, maxQuantity);
+	}
+	
+	@Override
+	public void requestMore(ResourceStock stock, int amount) {
+		super.requestMore(stock, amount);
+	}
+	
+	@Override
 	protected void matchBothEnds() {
 		logger.debug("Matching both ends...");
 		
@@ -119,4 +139,5 @@ public class DistributedMarket extends LocalMarket {
 			}
 		}
 	}
+	
 }

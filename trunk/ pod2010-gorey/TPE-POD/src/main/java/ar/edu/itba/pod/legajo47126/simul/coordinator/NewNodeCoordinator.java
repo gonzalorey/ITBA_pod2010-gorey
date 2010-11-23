@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
-import ar.edu.itba.pod.legajo47126.simul.SimulationManagerImpl;
 import ar.edu.itba.pod.simul.communication.AgentDescriptor;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.NodeAgentLoad;
@@ -61,7 +60,7 @@ public class NewNodeCoordinator implements Runnable{
 		
 		// added the local node load to the list
 		NodeManagement.getNodeKnownAgentsLoad().setNodeLoad(NodeManagement.getLocalNode().getNodeId(), 
-				SimulationManagerImpl.getInstance().getAgentsLoad());
+				NodeManagement.getSimulationManager().getAgentsLoad());
 		
 		if(NodeManagement.getNodeKnownAgentsLoad().getTotalLoad() == 0 || 
 				NodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size() == 0){
