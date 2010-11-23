@@ -7,7 +7,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.ClusterAdministrationImpl;
-import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
 
@@ -21,8 +20,12 @@ public class MessageRequester implements Runnable{
 	// default values
 	private final int DEFAULT_MESSAGE_REQUEST_SLEEPTIME = 2000;
 	
-	public MessageRequester() {
-		messageRequesterSleeptime = NodeManagement.getConfigFile().getProperty("MessageRequesterSleeptime", 
+	NodeManagement nodeManagement;
+	
+	public MessageRequester(NodeManagement nodeManagement) {
+		this.nodeManagement = nodeManagement;
+		
+		messageRequesterSleeptime = nodeManagement.getConfigFile().getProperty("MessageRequesterSleeptime", 
 				DEFAULT_MESSAGE_REQUEST_SLEEPTIME);
 	}
 	
@@ -32,8 +35,8 @@ public class MessageRequester implements Runnable{
 		
 		while(true){
 			try {
-				CopyOnWriteArrayList<String> groupNodes = ((ClusterAdministrationImpl)ConnectionManagerImpl.
-						getInstance().getClusterAdmimnistration()).getGroupNodes();
+				CopyOnWriteArrayList<String> groupNodes = ((ClusterAdministrationImpl)nodeManagement.
+						getConnectionManager().getClusterAdmimnistration()).getGroupNodes();
 				
 				// instance the gossip probability with the maximum
 				double gossipProbability = 1;
@@ -46,8 +49,8 @@ public class MessageRequester implements Runnable{
 				for(String nodeId : groupNodes){
 					if(rand.nextDouble() < gossipProbability){
 						logger.debug("Requesting the new messages from node [" + nodeId + "]");
-						Iterable<Message> newMessages = ConnectionManagerImpl.getInstance().getGroupCommunication().getListener().
-									getNewMessages(NodeManagement.getLocalNode().getNodeId());
+						Iterable<Message> newMessages = nodeManagement.getConnectionManager().getGroupCommunication().getListener().
+									getNewMessages(nodeManagement.getLocalNode().getNodeId());
 	
 						// if no new messages where received, lower the chances of requesting more messages
 						if(!newMessages.iterator().hasNext()){
@@ -56,7 +59,7 @@ public class MessageRequester implements Runnable{
 						} else {
 							for(Message msg : newMessages){
 								// do as if i'm sending me the messages
-								if(ConnectionManagerImpl.getInstance().getGroupCommunication().getListener().onMessageArrive(msg)){
+								if(nodeManagement.getConnectionManager().getGroupCommunication().getListener().onMessageArrive(msg)){
 									logger.debug("Added message [" + msg + "]");
 								}
 							}

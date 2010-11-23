@@ -32,9 +32,6 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 	// instance of the log4j logger
 	private static Logger logger = Logger.getLogger(ConnectionManagerImpl.class);
 	
-	// singletone instance of the ConnectionManger
-	private static ConnectionManagerImpl connectionManager = null;
-	
 	// RMI Registry
 	private Registry registry;
 
@@ -51,22 +48,26 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 	
 	private TransactionManager transactionManager;
 	
-	private ConnectionManagerImpl() throws RemoteException{
+	private NodeManagement nodeManagement;
+	
+	public ConnectionManagerImpl(NodeManagement nodeManagement) throws RemoteException{
 		UnicastRemoteObject.exportObject(this, 0);
 		logger.debug("Instantiating the Connection Manager...");
 		
+		this.nodeManagement = nodeManagement;
+		
 		// instance the MessageManager
-		messageManager = new MessageManager();
+		messageManager = new MessageManager(nodeManagement);
 		messageManager.startMessageProcessing();
 		logger.debug("Message Manager initialized");
 		
 		// instance the ClusterAdministration
-		clusterAdministration = new ClusterAdministrationImpl();
+		clusterAdministration = new ClusterAdministrationImpl(nodeManagement);
 		logger.debug("Connection Administration initialized");
 		
-		simulationCommunication = new SimulationCommunicationImpl();
+		simulationCommunication = new SimulationCommunicationImpl(nodeManagement);
 		
-		transactionManager = new TransactionManager();
+		transactionManager = new TransactionManager(nodeManagement);
 			
 		// instance the kown nodes map
 		knownNodes = new ConcurrentHashMap<String, Node>();
@@ -89,19 +90,6 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 			e.printStackTrace();
 		}
 		
-	}
-	
-	public static synchronized ConnectionManagerImpl getInstance() throws RemoteException{
-		if(connectionManager == null)
-			ConnectionManagerImpl.connectionManager = new ConnectionManagerImpl();
-		
-		return ConnectionManagerImpl.connectionManager;
-	}
-	
-	@Override
-	protected Object clone() throws CloneNotSupportedException {
-		// it won't be cloned now either
-		throw new CloneNotSupportedException();
 	}
 	
 	@Override
@@ -201,7 +189,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		// get the RMI Registry
 		try {
 			logger.debug("Creating the RMI Registry...");
-			registry = LocateRegistry.createRegistry(NodeManagement.getLocalNode().getPort());
+			registry = LocateRegistry.createRegistry(nodeManagement.getLocalNode().getPort());
 			logger.debug("RMI Registry raised successfully");
 		} catch (RemoteException e) {
 			logger.warn("Aparently, the RMI Registry was already instantiated");

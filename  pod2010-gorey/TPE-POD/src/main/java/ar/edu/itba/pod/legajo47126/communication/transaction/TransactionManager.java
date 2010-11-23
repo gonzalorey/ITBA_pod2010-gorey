@@ -7,7 +7,6 @@ import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.ThreePhaseCommit;
 import ar.edu.itba.pod.simul.communication.Transactionable;
@@ -26,17 +25,21 @@ public class TransactionManager implements Transactionable {
 	private long canCommitTimeout;
 
 	private ThreePhaseCommit localThreePhaseCommit;
+	
+	private NodeManagement nodeManagement;
 
-	public TransactionManager() throws RemoteException {
+	public TransactionManager(NodeManagement nodeManagement) throws RemoteException {
 		UnicastRemoteObject.exportObject(this, 0);
+		
+		this.nodeManagement = nodeManagement;
 
-		transactionAcceptingTimeout = NodeManagement.getConfigFile()
+		transactionAcceptingTimeout = nodeManagement.getConfigFile()
 				.getProperty("TransactionAcceptingTimeout", 200);
-		canCommitTimeout = NodeManagement.getConfigFile().getProperty(
+		canCommitTimeout = nodeManagement.getConfigFile().getProperty(
 				"CanCommitTimeout", 300);
 
 		// create the three phase commit of the transaction
-		localThreePhaseCommit = new ThreePhaseCommitImpl();
+		localThreePhaseCommit = new ThreePhaseCommitImpl(nodeManagement);
 	}
 
 	@Override
@@ -53,12 +56,12 @@ public class TransactionManager implements Transactionable {
 
 		// accept the connection from the other side
 		logger.debug("Call the transaction accept of the destination node");
-		ConnectionManagerImpl.getInstance().getConnectionManager(remoteNodeId)
+		nodeManagement.getConnectionManager().getConnectionManager(remoteNodeId)
 				.getNodeCommunication().acceptTransaction(
-						NodeManagement.getLocalNode().getNodeId());
+						nodeManagement.getLocalNode().getNodeId());
 
 		logger.debug("Transaction successfully accepted");
-		setTransaction(NodeManagement.getLocalNode().getNodeId(), remoteNodeId);
+		setTransaction(nodeManagement.getLocalNode().getNodeId(), remoteNodeId);
 
 		// launch a schedule task that will execute the onTimeout function after
 		// a timeout delay
@@ -90,7 +93,7 @@ public class TransactionManager implements Transactionable {
 		}
 
 		// set the transaction
-		setTransaction(remoteNodeId, NodeManagement.getLocalNode().getNodeId());
+		setTransaction(remoteNodeId, nodeManagement.getLocalNode().getNodeId());
 		logger.debug("Transaction accepted");
 	}
 
@@ -108,9 +111,9 @@ public class TransactionManager implements Transactionable {
 		logger.debug("Three-Phase-Commit successfully finished");
 
 		// if this is the source node, end the destination node transaction
-		if (transaction.getSourceNodeId().equals((NodeManagement.getLocalNode().getNodeId()))) {
+		if (transaction.getSourceNodeId().equals((nodeManagement.getLocalNode().getNodeId()))) {
 			logger.debug("Call the end transaction of the destination node");
-			ConnectionManagerImpl.getInstance().getConnectionManager(
+			nodeManagement.getConnectionManager().getConnectionManager(
 					transaction.getDestinationNodeId()).getNodeCommunication()
 					.endTransaction();
 		}
@@ -141,9 +144,9 @@ public class TransactionManager implements Transactionable {
 		transaction.setResource(resource, amount);
 
 		// if this is the source node, do the exchange of the destination node
-		if (transaction.getSourceNodeId().equals(NodeManagement.getLocalNode().getNodeId())) {
+		if (transaction.getSourceNodeId().equals(nodeManagement.getLocalNode().getNodeId())) {
 			logger.debug("Call the exchange of the destination node");
-			ConnectionManagerImpl.getInstance().getConnectionManager(transaction.getDestinationNodeId()).
+			nodeManagement.getConnectionManager().getConnectionManager(transaction.getDestinationNodeId()).
 				getNodeCommunication().exchange(resource,amount, sourceNode, destinationNode);
 		}
 
@@ -192,9 +195,9 @@ public class TransactionManager implements Transactionable {
 		clearTransaction();
 		
 		// if this is the source node, do the rollback of the destination node
-		if (transaction.getSourceNodeId().equals(NodeManagement.getLocalNode().getNodeId())) {
+		if (transaction.getSourceNodeId().equals(nodeManagement.getLocalNode().getNodeId())) {
 			logger.debug("Call the exchange of the destination node");
-			ConnectionManagerImpl.getInstance().getConnectionManager(transaction.getDestinationNodeId()).
+			nodeManagement.getConnectionManager().getConnectionManager(transaction.getDestinationNodeId()).
 				getNodeCommunication().rollback();
 		}
 		
@@ -218,9 +221,8 @@ public class TransactionManager implements Transactionable {
 	private void doThreePhaseCommit() throws RemoteException {
 		logger.debug("Doing the Three-Phase-Commit...");
 
-		ThreePhaseCommit remoteThreePhaseCommit = ConnectionManagerImpl
-				.getInstance().getConnectionManager(
-						transaction.getDestinationNodeId())
+		ThreePhaseCommit remoteThreePhaseCommit = nodeManagement.getConnectionManager().
+			getConnectionManager(transaction.getDestinationNodeId())
 				.getThreePhaseCommit();
 
 		if (!localThreePhaseCommit.canCommit(transaction.getSourceNodeId(),

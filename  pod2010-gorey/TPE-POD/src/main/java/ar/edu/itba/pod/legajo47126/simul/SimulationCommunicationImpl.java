@@ -19,22 +19,26 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 	// instance of the log4j logger
 	private static Logger logger = Logger.getLogger(SimulationCommunicationImpl.class);
 	
-	public SimulationCommunicationImpl() throws RemoteException {
+	private NodeManagement nodeManagement;
+	
+	public SimulationCommunicationImpl(NodeManagement nodeManagement) throws RemoteException {
 		UnicastRemoteObject.exportObject(this, 0);
+		
+		this.nodeManagement = nodeManagement;
 	}
 	
 	@Override
 	public void startAgent(AgentDescriptor descriptor) throws RemoteException {
 		logger.debug("Starting agent [" +  descriptor + "]...");
 		
-		NodeManagement.getSimulationManager().addAgent(descriptor.build());
+		nodeManagement.getSimulationManager().addAgent(descriptor.build());
 		logger.debug("Agent [" + descriptor + "] added to the node simulation");
 	}
 
 	@Override
 	public NodeAgentLoad getMinimumNodeKnownLoad() throws RemoteException {
 		
-		Iterator<NodeAgentLoad> iter = NodeManagement.getNodeKnownAgentsLoad().getNodesLoad().iterator();  
+		Iterator<NodeAgentLoad> iter = nodeManagement.getNodeKnownAgentsLoad().getNodesLoad().iterator();  
 		NodeAgentLoad minimumNodeKnownLoad = iter.next();
 		
 		while(iter.hasNext()){
@@ -60,7 +64,7 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 		
 		Collection<AgentDescriptor> migratingAgents = new CopyOnWriteArrayList<AgentDescriptor>();
 		for(int i = 0; i < numberOfAgents; i++){
-			Agent agent = NodeManagement.getSimulationManager().getAgentsLoadQueue().remove();
+			Agent agent = nodeManagement.getSimulationManager().getAgentsLoadQueue().remove();
 			migratingAgents.add(agent.getAgentDescriptor());
 			logger.debug("Agent [" + agent + "] removed from the node simulation");
 		}

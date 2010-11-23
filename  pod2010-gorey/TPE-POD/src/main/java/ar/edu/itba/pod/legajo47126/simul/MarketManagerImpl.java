@@ -1,15 +1,22 @@
 package ar.edu.itba.pod.legajo47126.simul;
 
+import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.market.MarketInspector;
 import ar.edu.itba.pod.simul.market.MarketManager;
 
 public class MarketManagerImpl implements MarketManager {
 
-	DistributedMarket distributedMarket;
+	private DistributedMarket distributedMarket;
+	
+	private NodeManagement nodeManagement;
+	
+	public MarketManagerImpl(NodeManagement nodeManagement) {
+		this.nodeManagement = nodeManagement;
+	}
 	
 	@Override
 	public void start() {
-		distributedMarket = new DistributedMarket();
+		distributedMarket = new DistributedMarket(nodeManagement);
 		distributedMarket.start();
 	}
 	
