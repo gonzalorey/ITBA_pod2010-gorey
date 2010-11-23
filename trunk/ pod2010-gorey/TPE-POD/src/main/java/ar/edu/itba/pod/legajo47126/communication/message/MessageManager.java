@@ -58,6 +58,9 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 	public void broadcast(Message message) throws RemoteException {
 		logger.debug("Broadcasting message [" + message + "]");
 		
+		if(nodeManagement.getConnectionManager().getClusterAdmimnistration().getGroupId() == null)
+			throw new IllegalStateException("A broadcast message was ");
+		
 		// instance the gossip probability with the maximum
 		double gossipProbability = 1;
 		logger.debug("Start broadcasting with a gossip probability of " + gossipProbability);

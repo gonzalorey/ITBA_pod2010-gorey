@@ -17,10 +17,10 @@ import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.ClusterAdministrationImpl;
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
-import ar.edu.itba.pod.legajo47126.simul.AgentFactory;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.DisconnectionCoordinator;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewAgentCoordinator;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewNodeCoordinator;
+import ar.edu.itba.pod.legajo47126.simulation.AgentFactory;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.market.Resource;
 import ar.edu.itba.pod.simul.simulation.Agent;

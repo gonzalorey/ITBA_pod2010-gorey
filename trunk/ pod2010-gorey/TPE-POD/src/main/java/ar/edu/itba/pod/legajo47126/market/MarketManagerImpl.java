@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.simul;
+package ar.edu.itba.pod.legajo47126.market;
 
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.market.MarketInspector;
