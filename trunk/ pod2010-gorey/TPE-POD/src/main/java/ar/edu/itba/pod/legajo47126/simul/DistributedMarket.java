@@ -4,7 +4,6 @@ import java.rmi.RemoteException;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
@@ -21,6 +20,13 @@ public class DistributedMarket extends LocalMarket {
 	private static Logger logger = Logger.getLogger(NodeManagement.class);
 	
 	protected final Multiset<ResourceStock> remoteSelling = ConcurrentHashMultiset.create();
+	
+	private NodeManagement nodeManagement;
+	
+	public DistributedMarket(NodeManagement nodeManagement) {
+		super();
+		this.nodeManagement = nodeManagement;
+	}
 	
 	@Override
 	protected void matchBothEnds() {
@@ -45,10 +51,11 @@ public class DistributedMarket extends LocalMarket {
 			// the buyer amount could have been altered
 			int amount = buying.count(buyer);
 			if(amount != 0){
-				Message message = MessageFactory.ResourceRequestMessage(buyer.resource(), amount);
+				Message message = MessageFactory.ResourceRequestMessage(nodeManagement.getLocalNode().getNodeId(),
+						buyer.resource(), amount);
 				try {
 					logger.debug("Broadcasting message [" + message + "]");
-					ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+					nodeManagement.getConnectionManager().getGroupCommunication().broadcast(message);
 				} catch (RemoteException e) {
 					logger.error("An error ocurred while trying to broadcast the message");
 					logger.error("Error message: " + e.getMessage());

@@ -5,10 +5,10 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.ClusterAdministrationImpl;
-import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.DisconnectionCoordinator;
@@ -28,10 +28,16 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 	NodeManagement nodeManagement;
 	
 	public ObjectFactoryAlternativeImpl(String args[]) throws UnknownHostException, RemoteException, IOException {
+		// set the basic configuration for the logger, so everything goes to stdout
+		BasicConfigurator.configure();	//TODO set a propper configuration file for the logger
+		
 		nodeManagement = new NodeManagement(args);
 	}
 	
 	public ObjectFactoryAlternativeImpl() throws UnknownHostException, RemoteException, IOException {
+		// set the basic configuration for the logger, so everything goes to stdout
+		BasicConfigurator.configure();	//TODO set a propper configuration file for the logger
+		
 		String[] args = {};
 		nodeManagement = new NodeManagement(args);
 	}
@@ -42,7 +48,7 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 		Preconditions.checkState(entryPointId.equals(""), "Empty String received");
 
 		try {
-			ConnectionManagerImpl.getInstance().getClusterAdmimnistration().connectToGroup(entryPointId);
+			nodeManagement.getConnectionManager().getClusterAdmimnistration().connectToGroup(entryPointId);
 		} catch (RemoteException e) {
 			logger.error("An error ocurred during the group connection");
 			logger.error("Error message: " + e.getMessage());
@@ -54,7 +60,7 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 	@Override
 	public void createGroup() throws ConnectException {
 		try {
-			ConnectionManagerImpl.getInstance().getClusterAdmimnistration().createGroup();
+			nodeManagement.getConnectionManager().getClusterAdmimnistration().createGroup();
 		} catch (RemoteException e) {
 			logger.error("An error ocurred during the group creation");
 			logger.error("Error message: " + e.getMessage());
@@ -66,17 +72,18 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 	@Override
 	public void disconnect() {
 		try{
-			new DisconnectionCoordinator().run();
+			new DisconnectionCoordinator(nodeManagement).run();
 			
 			// create the DISCONNECT message
-			Message message = MessageFactory.DisconnectMessage(NodeManagement.getLocalNode().getNodeId());
+			Message message = MessageFactory.DisconnectMessage(nodeManagement.getLocalNode().getNodeId(),
+					nodeManagement.getLocalNode().getNodeId());
 			logger.debug("Built message [" + message + "], broadcast it");
 			
 			// broadcast the messsage
-			ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+			nodeManagement.getConnectionManager().getGroupCommunication().broadcast(message);
 			
 			// clears the group data
-			((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().getClusterAdmimnistration()).clearGroup();
+			((ClusterAdministrationImpl)nodeManagement.getConnectionManager().getClusterAdmimnistration()).clearGroup();
 			
 		} catch (RemoteException e) {
 			logger.error("There was an error during the disconnection of the node");
@@ -86,23 +93,17 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 
 	@Override
 	public ConnectionManager getConnectionManager() {
-		try {
-			return ConnectionManagerImpl.getInstance();
-		} catch (RemoteException e) {
-			logger.error("An error ocurred while getting the connection manager");
-			logger.error("Error message: " + e.getMessage());
-		}
-		return null;
+		return nodeManagement.getConnectionManager();
 	}
 
 	@Override
 	public MarketManager getMarketManager() {
-		return NodeManagement.getMarketManager();
+		return nodeManagement.getMarketManager();
 	}
 
 	@Override
 	public SimulationManager getSimulationManager() {
-		return NodeManagement.getSimulationManager();
+		return nodeManagement.getSimulationManager();
 	}
 
 }

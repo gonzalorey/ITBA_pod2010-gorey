@@ -11,6 +11,7 @@ import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
 import ar.edu.itba.pod.legajo47126.simul.MarketManagerImpl;
 import ar.edu.itba.pod.legajo47126.simul.SimulationManagerImpl;
+import ar.edu.itba.pod.simul.communication.ConnectionManager;
 import ar.edu.itba.pod.simul.market.Market;
 import ar.edu.itba.pod.simul.market.MarketManager;
 import ar.edu.itba.pod.simul.simulation.SimulationManager;
@@ -23,19 +24,22 @@ public class NodeManagement {
 	private static Logger logger = Logger.getLogger(NodeManagement.class);
 	
 	// instance of the local machine node
-	private static Node localNode;
+	private Node localNode;
 	
 	// configuration file with the loaded properties
-	private static ConfigFile configFile;
+	private ConfigFile configFile;
+	
+	// instance of the connection manager
+	private ConnectionManager connectionManager;
 	
 	// instance of the market manager
-	private static MarketManager marketManager;
+	private MarketManager marketManager;
 	
 	// instance of the simulation manager
-	private static SimulationManager simulationManager;
+	private SimulationManager simulationManager;
 	
 	// load of every known node
-	private static NodeKnownAgentsLoad nodeKnownAgentsLoad;	// TODO should go in SimulationCommunicationImpl...
+	private NodeKnownAgentsLoad nodeKnownAgentsLoad;	// TODO should go in SimulationCommunicationImpl...
 	
 	public NodeManagement(String[] args) throws UnknownHostException, IOException, RemoteException {
 		
@@ -50,7 +54,7 @@ public class NodeManagement {
 		configFile = new ConfigFile(configFileName);
 		
 		logger.info("Starting the Market Manager...");
-		marketManager = new MarketManagerImpl();
+		marketManager = new MarketManagerImpl(this);
 		marketManager = new FeedbackMarketManager(new ConsoleFeedbackCallback(), marketManager);
 		marketManager.start();
 		logger.info("Market Manager started");
@@ -59,8 +63,8 @@ public class NodeManagement {
 		Market market = marketManager.market();
 		
 		// instance the simulation manager
-		simulationManager = new SimulationManagerImpl();
-//		simulationManager = new FeedbackSimulationManager(callback, simulationManager);
+		simulationManager = new SimulationManagerImpl(this);
+//		simulationManager = new FeedbackSimulationManager(new ConsoleFeedbackCallback(), simulationManager);
 		
 		// register the market in the simulation
 		simulationManager.register(Market.class, market);
@@ -69,13 +73,9 @@ public class NodeManagement {
 		nodeKnownAgentsLoad = new NodeKnownAgentsLoad();
 		
 		// create the connection manager
-		ConnectionManagerImpl.getInstance();
+		connectionManager = new ConnectionManagerImpl(this);
 		logger.info("Connection Manager initialized successfully");
 				
-		// creaate and run the console
-		new NodeConsole().runConsole();
-
-		logger.info("Bye!");
 	}
 	
 	public static void main(String[] args) {
@@ -85,7 +85,11 @@ public class NodeManagement {
 		
 		// create the Node Management
 		try {
-			new NodeManagement(args);
+			NodeManagement nodeManagement = new NodeManagement(args);
+			
+			// creaate and run the console
+			new NodeConsole(nodeManagement).runConsole();
+			
 		} catch (UnknownHostException e) {
 			logger.fatal("The local node couldn't be started. Aborting execution");
 			logger.fatal("Error message:" + e.getMessage());
@@ -101,6 +105,9 @@ public class NodeManagement {
 			logger.error("An unexpected exception ocurred");
             logger.error("Error message:" + e.getMessage());
 		}
+
+		logger.info("Bye!");
+
 	}
 	
 	/**
@@ -108,23 +115,27 @@ public class NodeManagement {
 	 * 
 	 * @return a reference to the local node
 	 */
-	public static Node getLocalNode(){
+	public Node getLocalNode(){
 		return localNode;
 	}
 	
-	public static ConfigFile getConfigFile() {
+	public ConfigFile getConfigFile() {
 		return configFile;
 	}
 	
-	public static MarketManagerImpl getMarketManager() {
+	public ConnectionManagerImpl getConnectionManager(){
+		return (ConnectionManagerImpl) connectionManager;
+	}
+	
+	public MarketManagerImpl getMarketManager() {
 		return (MarketManagerImpl)marketManager;
 	}
 	
-	public static SimulationManagerImpl getSimulationManager(){
+	public SimulationManagerImpl getSimulationManager(){
 		return (SimulationManagerImpl)simulationManager;
 	}
 
-	public static NodeKnownAgentsLoad getNodeKnownAgentsLoad(){
+	public NodeKnownAgentsLoad getNodeKnownAgentsLoad(){
 		return nodeKnownAgentsLoad;
 	}
 	

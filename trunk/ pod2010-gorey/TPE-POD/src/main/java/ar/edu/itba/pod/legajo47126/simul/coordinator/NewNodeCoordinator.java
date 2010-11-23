@@ -5,7 +5,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.AgentDescriptor;
@@ -27,21 +26,24 @@ public class NewNodeCoordinator implements Runnable{
 
 	private int coordinatorWaitTime;
 	
-	public NewNodeCoordinator() {
-		this.coordinatorWaitTime = NodeManagement.getConfigFile().getProperty("CoordinatorWaitTime", 10000);
+	private NodeManagement nodeManagement;
+	
+	public NewNodeCoordinator(NodeManagement nodeManagement) {
+		this.nodeManagement = nodeManagement;
+		this.coordinatorWaitTime = nodeManagement.getConfigFile().getProperty("CoordinatorWaitTime", 10000);
 	}
 	
 	@Override
 	public void run() {
 
 		// reset the node agents load
-		NodeManagement.getNodeKnownAgentsLoad().reset();
+		nodeManagement.getNodeKnownAgentsLoad().reset();
 		
 		// broadcast a message saying that the local node is the new coordinator
 		logger.debug("Start coordinating, inform all the others");
-		Message message = MessageFactory.NodeAgentLoadRequestMessage();
+		Message message = MessageFactory.NodeAgentLoadRequestMessage(nodeManagement.getLocalNode().getNodeId());
 		try {
-			ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+			nodeManagement.getConnectionManager().getGroupCommunication().broadcast(message);
 		} catch (RemoteException e) {
 			logger.error("There was an error during the coordination broadcast");
 			logger.error("Error message:" + e.getMessage());
@@ -59,28 +61,28 @@ public class NewNodeCoordinator implements Runnable{
 		logger.debug("Waiting time ended, redistributing the node agents load...");
 		
 		// added the local node load to the list
-		NodeManagement.getNodeKnownAgentsLoad().setNodeLoad(NodeManagement.getLocalNode().getNodeId(), 
-				NodeManagement.getSimulationManager().getAgentsLoad());
+		nodeManagement.getNodeKnownAgentsLoad().setNodeLoad(nodeManagement.getLocalNode().getNodeId(), 
+				nodeManagement.getSimulationManager().getAgentsLoad());
 		
-		if(NodeManagement.getNodeKnownAgentsLoad().getTotalLoad() == 0 || 
-				NodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size() == 0){
+		if(nodeManagement.getNodeKnownAgentsLoad().getTotalLoad() == 0 || 
+				nodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size() == 0){
 			logger.debug("No nodes to distribute the load, coordination ended");
 			return;
 		}
 		
-		int loadPerNode = NodeManagement.getNodeKnownAgentsLoad().getTotalLoad() 
-			/ NodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size();
+		int loadPerNode = nodeManagement.getNodeKnownAgentsLoad().getTotalLoad() 
+			/ nodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size();
 	
 		ConcurrentLinkedQueue<AgentDescriptor> remainingAgents = new ConcurrentLinkedQueue<AgentDescriptor>();
 		ConcurrentLinkedQueue<NodeAgentLoad> lowOnAgentsNodes = new ConcurrentLinkedQueue<NodeAgentLoad>();
 
-		for(NodeAgentLoad nodeAgentLoad : NodeManagement.getNodeKnownAgentsLoad().getNodesLoad()){
+		for(NodeAgentLoad nodeAgentLoad : nodeManagement.getNodeKnownAgentsLoad().getNodesLoad()){
 			int numberOfNodeRemainingAgents = nodeAgentLoad.getNumberOfAgents() - loadPerNode;
 			
 			if(numberOfNodeRemainingAgents > 0){
 				try {
 					// obtain all his agents and add them to the remaining agents list
-					for(AgentDescriptor agentDescriptor : ConnectionManagerImpl.getInstance().getConnectionManager(nodeAgentLoad.getNodeId()).
+					for(AgentDescriptor agentDescriptor : nodeManagement.getConnectionManager().getConnectionManager(nodeAgentLoad.getNodeId()).
 							getSimulationCommunication().migrateAgents(numberOfNodeRemainingAgents)){
 						remainingAgents.add(agentDescriptor);
 					}
@@ -111,7 +113,7 @@ public class NewNodeCoordinator implements Runnable{
 			logger.debug(remainingAgents.size() + " remaining, give them to the local node");
 			
 			try {
-				giveAgents(NodeManagement.getLocalNode().getNodeId(), remainingAgents.size(), remainingAgents);
+				giveAgents(nodeManagement.getLocalNode().getNodeId(), remainingAgents.size(), remainingAgents);
 			} catch (RemoteException e) {
 				logger.debug("There was an error and the agent/s couldn't be added to the node");
 				logger.debug("Error message:" + e.getMessage());
@@ -129,7 +131,7 @@ public class NewNodeCoordinator implements Runnable{
 			AgentDescriptor agentDescriptor = remainingAgents.peek();
 			
 			// start it in the remote node
-			ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).
+			nodeManagement.getConnectionManager().getConnectionManager(nodeId).
 				getSimulationCommunication().startAgent(agentDescriptor);
 			
 			// remove the agent from the queue

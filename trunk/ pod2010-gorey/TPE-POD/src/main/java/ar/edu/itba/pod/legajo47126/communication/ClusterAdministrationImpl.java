@@ -24,14 +24,18 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	// collection with the nodes that belong to the group 
 	private CopyOnWriteArrayList<String> groupNodes = null;
 	
+	private NodeManagement nodeManagement;
+	
 	/**
 	 * Instance the cluster administration with the destination node
 	 * 
 	 * @param destinationNode node to be used as the destination to all the cluster operations
 	 * @throws RemoteException 
 	 */
-	public ClusterAdministrationImpl() throws RemoteException{
+	public ClusterAdministrationImpl(NodeManagement nodeManagement) throws RemoteException{
 		UnicastRemoteObject.exportObject(this, 0);
+		
+		this.nodeManagement = nodeManagement;
 		
 		// instantiate the list of group nodes with a concurrent array list
 		groupNodes = new CopyOnWriteArrayList<String>();
@@ -66,29 +70,29 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		
 		if(groupId != null)
 			// the local node already belongs to a group
-			throw new IllegalStateException("The local node [" + NodeManagement.getLocalNode() + 
+			throw new IllegalStateException("The local node [" + nodeManagement.getLocalNode() + 
 					"] already belongs to a group");
 		
-		if(initialNode.equals(NodeManagement.getLocalNode().getNodeId()))
+		if(initialNode.equals(nodeManagement.getLocalNode().getNodeId()))
 			// the local node is the same as the initial node
-			throw new IllegalArgumentException("The local node [" + NodeManagement.getLocalNode() + 
+			throw new IllegalArgumentException("The local node [" + nodeManagement.getLocalNode() + 
 					"] is the same as the initial node");
 		
 		logger.debug("Get the group id of the initial node [" + initialNode + "]");
 		
 		// set the local node group as the one from the initial node
-		groupId = ConnectionManagerImpl.getInstance().getConnectionManager(initialNode).
+		groupId = nodeManagement.getConnectionManager().getConnectionManager(initialNode).
 				getClusterAdmimnistration().getGroupId();
 		logger.debug("Local node connected to the group [" + groupId + "]. Now, tell the initial node to add him");
 		
 		try{
 			// tell the initial node to add the local node
-			Iterable<String> initialNodeGroupNodes = ConnectionManagerImpl.getInstance().getConnectionManager(initialNode).
-			getClusterAdmimnistration().addNewNode(NodeManagement.getLocalNode().getNodeId());
+			Iterable<String> initialNodeGroupNodes = nodeManagement.getConnectionManager().getConnectionManager(initialNode).
+			getClusterAdmimnistration().addNewNode(nodeManagement.getLocalNode().getNodeId());
 			
 			// adding the initial node group nodes to the groupNodes
 			for(String nodeId : initialNodeGroupNodes){
-				if(!nodeId.equals(NodeManagement.getLocalNode().getNodeId())){
+				if(!nodeId.equals(nodeManagement.getLocalNode().getNodeId())){
 					groupNodes.add(nodeId);
 					logger.debug("Node [" + nodeId + "] added to the group nodes list");
 				}
@@ -108,10 +112,10 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		}
 		
 		logger.debug("Initial node [" + initialNode + "] successfully added the " +
-				"local node [" + NodeManagement.getLocalNode() + "] to the group");
+				"local node [" + nodeManagement.getLocalNode() + "] to the group");
 
 		// start the coordinator thread
-		NewNodeCoordinator coordinatorManager = new NewNodeCoordinator();
+		NewNodeCoordinator coordinatorManager = new NewNodeCoordinator(nodeManagement);
 		new Thread(coordinatorManager).start();
 	}
 	
@@ -121,11 +125,11 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		
 		if(groupId == null)
 			// the local node is not connected to a cluster
-			throw new IllegalStateException("The local node [" + NodeManagement.getLocalNode() + "]" +
+			throw new IllegalStateException("The local node [" + nodeManagement.getLocalNode() + "]" +
 					" is not connected to a group");
 		
 		// get the new node group id
-		String newNodeGroupId = ConnectionManagerImpl.getInstance().getConnectionManager(newNode).
+		String newNodeGroupId = nodeManagement.getConnectionManager().getConnectionManager(newNode).
 							getClusterAdmimnistration().getGroupId();
 		
 		logger.debug("Seeing if the local node's group is the same as the new node's group");
@@ -156,7 +160,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		
 		// remove the node from the group and the known nodes list 
 		groupNodes.remove(nodeId);
-		ConnectionManagerImpl.getInstance().getKnownNodes().remove(nodeId);
+		nodeManagement.getConnectionManager().getKnownNodes().remove(nodeId);
 		logger.debug("Node removed from groupNodes and knownNodes lists");
 	}
 	
@@ -188,7 +192,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		for(String nodeId : groupNodes){
 			if(rand.nextDouble() < comparator){
 				try {
-					ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).getClusterAdmimnistration().
+					nodeManagement.getConnectionManager().getConnectionManager(nodeId).getClusterAdmimnistration().
 						addNewNode(newNode);
 					logger.debug("Added to node [" + nodeId + "]");
 					amountAdded++;

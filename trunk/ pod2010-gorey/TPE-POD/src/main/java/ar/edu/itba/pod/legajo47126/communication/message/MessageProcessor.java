@@ -24,10 +24,13 @@ public class MessageProcessor implements Runnable {
 	
 	private long messageProcessingSleepTime;
 	
-	public MessageProcessor(LinkedBlockingQueue<MessageContainer> messageQueue){
+	private NodeManagement nodeManagement;
+	
+	public MessageProcessor(NodeManagement nodeManagement, LinkedBlockingQueue<MessageContainer> messageQueue){
+		this.nodeManagement = nodeManagement;
 		this.messagesQueue = messageQueue;
 		
-		messageProcessingSleepTime = NodeManagement.getConfigFile().getProperty("MessageProcessingSleepTime", 1000);
+		messageProcessingSleepTime = nodeManagement.getConfigFile().getProperty("MessageProcessingSleepTime", 1000);
 	}
 	
 	@Override
@@ -127,7 +130,7 @@ public class MessageProcessor implements Runnable {
 	private void doDisconnect(MessageContainer messageContainer){
 		try {
 			// broadcast the message
-			ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(messageContainer.getMessage());
+			nodeManagement.getConnectionManager().getGroupCommunication().broadcast(messageContainer.getMessage());
 			logger.debug("Message successfully broadcasted");
 		} catch (RemoteException e) {
 			logger.error("The message couldn't be broadcasted");
@@ -137,7 +140,7 @@ public class MessageProcessor implements Runnable {
 		DisconnectPayload payload = (DisconnectPayload) messageContainer.getMessage().getPayload(); 
 		try {
 			// disconnect the node
-			ConnectionManagerImpl.getInstance().getClusterAdmimnistration().
+			nodeManagement.getConnectionManager().getClusterAdmimnistration().
 				disconnectFromGroup(payload.getDisconnectedNodeId());
 			logger.debug("Node disconnected from the local node");
 		} catch (IllegalArgumentException e) {
@@ -161,14 +164,14 @@ public class MessageProcessor implements Runnable {
 	private void doNodeAgentsLoad(MessageContainer messageContainer) {
 		// obtaining the payload and adding the load to the node agents load map
 		NodeAgentLoadPayload payload = (NodeAgentLoadPayload) messageContainer.getMessage().getPayload();
-		NodeManagement.getNodeKnownAgentsLoad().setNodeLoad(messageContainer.getMessage().getNodeId(), payload.getLoad());
+		nodeManagement.getNodeKnownAgentsLoad().setNodeLoad(messageContainer.getMessage().getNodeId(), payload.getLoad());
 		logger.debug("Node [" + messageContainer.getMessage().getNodeId() + "] and load [" + payload.getLoad() + "] added to the local map");
 	}
 
 	private void doNodeAgentsLoadRequest(MessageContainer messageContainer) {
 		try {
 			// broadcast the message
-			ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(messageContainer.getMessage());
+			nodeManagement.getConnectionManager().getGroupCommunication().broadcast(messageContainer.getMessage());
 			logger.debug("Message successfully broadcasted");
 		} catch (RemoteException e) {
 			logger.error("The message couldn't be broadcasted");
@@ -176,10 +179,11 @@ public class MessageProcessor implements Runnable {
 		}
 		
 		logger.debug("Sending a NODE_AGENTS_LOAD message...");
-		Message loadMessage = MessageFactory.NodeAgentLoadMessage();
+		Message loadMessage = MessageFactory.NodeAgentLoadMessage(nodeManagement.getLocalNode().getNodeId(), 
+				nodeManagement.getSimulationManager().getAgentsLoad());
 		try {
 			// sending the message
-			ConnectionManagerImpl.getInstance().getGroupCommunication().send(loadMessage, messageContainer.getMessage().getNodeId());
+			nodeManagement.getConnectionManager().getGroupCommunication().send(loadMessage, messageContainer.getMessage().getNodeId());
 			logger.debug("Message successfully sent");
 		} catch (RemoteException e) {
 			logger.error("The message couldn't be sent");
@@ -195,8 +199,8 @@ public class MessageProcessor implements Runnable {
 	private void doNodeMarketDataRequest(MessageContainer messageContainer) {
 		try {
 			logger.debug("Sending a NODE_MARKET_DATA message...");
-			Message message = MessageFactory.NodeMarketDataMessage();
-			ConnectionManagerImpl.getInstance().getGroupCommunication().send(message, messageContainer.getMessage().getNodeId());
+			Message message = MessageFactory.NodeMarketDataMessage(nodeManagement.getLocalNode().getNodeId());
+			nodeManagement.getConnectionManager().getGroupCommunication().send(message, messageContainer.getMessage().getNodeId());
 		} catch (RemoteException e) {
 			logger.error("The message couldn't be sent");
 			logger.error("Error message: " + e.getMessage());
@@ -205,24 +209,24 @@ public class MessageProcessor implements Runnable {
 	
 	private void doResourceRequest(MessageContainer messageContainer) {
 		ResourceRequestPayload payload = (ResourceRequestPayload) messageContainer.getMessage().getPayload();
-		long timeout = NodeManagement.getConfigFile().getProperty("TransactionTimeout", 1000);
+		long timeout = nodeManagement.getConfigFile().getProperty("TransactionTimeout", 1000);
 		try{
 			// begin the transaction with the remote node
 			logger.info("Beginning transaction with [" + messageContainer.getMessage().getNodeId() + 
 					"] with a timeout [" + timeout + "]");
-			ConnectionManagerImpl.getInstance().getNodeCommunication().beginTransaction(
+			nodeManagement.getConnectionManager().getNodeCommunication().beginTransaction(
 					messageContainer.getMessage().getNodeId(), timeout);
 			
 			// exchange my resources
 			logger.info("Exchanging an amount of [" + payload.getAmountRequested() + "] " +
 					"of resource [" + payload.getResource() + "]");
-			ConnectionManagerImpl.getInstance().getNodeCommunication().exchange(payload.getResource(), 
-					payload.getAmountRequested(), NodeManagement.getLocalNode().getNodeId(), 
+			nodeManagement.getConnectionManager().getNodeCommunication().exchange(payload.getResource(), 
+					payload.getAmountRequested(), nodeManagement.getLocalNode().getNodeId(), 
 					messageContainer.getMessage().getNodeId());
 									
 			// end the transaction
 			logger.info("Ending the transaction");
-			ConnectionManagerImpl.getInstance().getNodeCommunication().endTransaction();
+			nodeManagement.getConnectionManager().getNodeCommunication().endTransaction();
 		} catch (Exception e) {
 			logger.error("There was an error during the transaction, aborting...");
 			logger.error("Error message: " + e.getMessage());
@@ -230,7 +234,7 @@ public class MessageProcessor implements Runnable {
 			try{
 				// rollback the transactions
 				logger.info("Rollback the transaction");
-				ConnectionManagerImpl.getInstance().getNodeCommunication().rollback();
+				nodeManagement.getConnectionManager().getNodeCommunication().rollback();
 			} catch (Exception e1) {
 				logger.error("There was an error during the transaction abort");
 				logger.error("Error message: " + e1.getMessage());
@@ -243,18 +247,18 @@ public class MessageProcessor implements Runnable {
 			(ResourceTransferMessagePayload) messageContainer.getMessage().getPayload();
 		
 		
-		if(payload.getDestination().equals(NodeManagement.getLocalNode().getNodeId())){
+		if(payload.getDestination().equals(nodeManagement.getLocalNode().getNodeId())){
 			// it was me the destination node, I should add the resources
 			logger.info("Adding to the market an amount of [" + payload.getAmount() + "] of resource [" 
 					+ payload.getResource() + "]...");
-			NodeManagement.getMarketManager().market().addToRemoteSelling(payload.getResource(), payload.getAmount());
+			nodeManagement.getMarketManager().market().addToRemoteSelling(payload.getResource(), payload.getAmount());
 			logger.debug("Resources added successfully");
 			
 		} else {
 			// it wasn't me the destination, so I should remove the resources
 			logger.info("Removing from the market an amount of [" + payload.getAmount() + "] of resource [" 
 					+ payload.getResource() + "]...");
-			NodeManagement.getMarketManager().market().removeFromSelling(payload.getResource(), payload.getAmount());
+			nodeManagement.getMarketManager().market().removeFromSelling(payload.getResource(), payload.getAmount());
 			logger.debug("Resources removed successfully");
 		}
 	}

@@ -4,7 +4,6 @@ import java.rmi.RemoteException;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
@@ -20,23 +19,26 @@ public class NewAgentCoordinator implements Runnable{
 	
 	private Agent newAgent;
 	
-	public NewAgentCoordinator(Agent newAgent) {
+	private NodeManagement nodeManagement;
+	
+	public NewAgentCoordinator(NodeManagement nodeManagement, Agent newAgent) {
 		this.newAgent = newAgent;
+		this.nodeManagement = nodeManagement;
 		
-		coordinatorWaitTime = NodeManagement.getConfigFile().getProperty("CoordinatorWaitTime", 10000);
+		coordinatorWaitTime = nodeManagement.getConfigFile().getProperty("CoordinatorWaitTime", 10000);
 	}
 	
 	@Override
 	public void run() {
 		
 		// reset the node agents load
-		NodeManagement.getNodeKnownAgentsLoad().reset();
+		nodeManagement.getNodeKnownAgentsLoad().reset();
 		
 		// broadcast a message saying that the local node is the new coordinator
 		logger.debug("Start coordinating, inform all the others");
-		Message message = MessageFactory.NodeAgentLoadRequestMessage();
+		Message message = MessageFactory.NodeAgentLoadRequestMessage(nodeManagement.getLocalNode().getNodeId());
 		try {
-			ConnectionManagerImpl.getInstance().getGroupCommunication().broadcast(message);
+			nodeManagement.getConnectionManager().getGroupCommunication().broadcast(message);
 		} catch (RemoteException e) {
 			logger.error("There was an error during the coordination broadcast");
 			logger.error("Error message:" + e.getMessage());
@@ -54,12 +56,12 @@ public class NewAgentCoordinator implements Runnable{
 		logger.debug("Waiting time ended, redistributing the node agents load...");
 		
 		// added the local node load to the list
-		NodeManagement.getNodeKnownAgentsLoad().setNodeLoad(NodeManagement.getLocalNode().getNodeId(), 
-				NodeManagement.getSimulationManager().getAgentsLoad());
+		nodeManagement.getNodeKnownAgentsLoad().setNodeLoad(nodeManagement.getLocalNode().getNodeId(), 
+				nodeManagement.getSimulationManager().getAgentsLoad());
 		
 		NodeAgentLoad nodeAgentLoad;
 		try {
-			nodeAgentLoad = ConnectionManagerImpl.getInstance().getSimulationCommunication().getMinimumNodeKnownLoad();
+			nodeAgentLoad = nodeManagement.getConnectionManager().getSimulationCommunication().getMinimumNodeKnownLoad();
 		} catch (RemoteException e) {
 			logger.error("There was an error during the minimum node known load calculation");
 			logger.error("Error message:" + e.getMessage());
@@ -77,7 +79,7 @@ public class NewAgentCoordinator implements Runnable{
 		
 		// start it in the remote node
 		try {
-			ConnectionManagerImpl.getInstance().getConnectionManager(nodeAgentLoad.getNodeId()).
+			nodeManagement.getConnectionManager().getConnectionManager(nodeAgentLoad.getNodeId()).
 				getSimulationCommunication().startAgent(newAgent.getAgentDescriptor());
 		} catch (RemoteException e) {
 			logger.error("There was an error during the start of the new agent in the node [" + nodeAgentLoad.getNodeId() + "]");

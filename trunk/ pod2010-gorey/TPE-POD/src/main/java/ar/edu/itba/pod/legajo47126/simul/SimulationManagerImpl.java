@@ -26,8 +26,12 @@ public class SimulationManagerImpl implements SimulationManager {
 	
 	private boolean started = false;
 	
-	public SimulationManagerImpl() {
-		int amountOfHoursPerSecond = NodeManagement.getConfigFile().getProperty("AmountOfHoursPerSecond", 6); 
+	// instance of the node management
+	NodeManagement nodeManagement;
+	
+	public SimulationManagerImpl(NodeManagement nodeManagement) {
+		this.nodeManagement = nodeManagement;
+		int amountOfHoursPerSecond = nodeManagement.getConfigFile().getProperty("AmountOfHoursPerSecond", 6); 
 		TimeMapper timeMapper = TimeMappers.oneSecondEach(amountOfHoursPerSecond, TimeUnit.HOURS);
 		distributedSimulation = new DistributedSimulation(timeMapper);
 	}

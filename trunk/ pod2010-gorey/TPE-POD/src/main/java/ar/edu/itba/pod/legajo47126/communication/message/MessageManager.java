@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
 import ar.edu.itba.pod.legajo47126.communication.ClusterAdministrationImpl;
-import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.ClusterCommunication;
 import ar.edu.itba.pod.simul.communication.Message;
@@ -33,17 +32,24 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 	// default values
 	private final int DEFAULT_MESSAGES_QUEUE_SIZE = 1000;
 	private final int DEFAULT_BROADCASTED_MESSAGES_QUEUE_SIZE = 1000;
+	private final long DEFAULT_MESSAGE_EXPIRATION_TIME = 2000;
 	
-	public MessageManager() throws RemoteException{
+	NodeManagement nodeManagement;
+	
+	public MessageManager(NodeManagement nodeManagement) throws RemoteException{
 		UnicastRemoteObject.exportObject(this, 0);
+		
+		this.nodeManagement = nodeManagement;
 
 		// instance the message queue
-		messagesQueue = new LinkedBlockingQueue<MessageContainer>(NodeManagement.getConfigFile().
-				getProperty("MessagesQueueSize", DEFAULT_MESSAGES_QUEUE_SIZE));
+		int messagesQueueSize = nodeManagement.getConfigFile().
+			getProperty("MessagesQueueSize", DEFAULT_MESSAGES_QUEUE_SIZE);
+		messagesQueue = new LinkedBlockingQueue<MessageContainer>(messagesQueueSize);
 		
 		// instance the broadcasted messages queue
-		broadcastedMessagesQueue = new LinkedBlockingQueue<MessageContainer>(NodeManagement.getConfigFile().
-				getProperty("BroadcastedMessagesQueueSize", DEFAULT_BROADCASTED_MESSAGES_QUEUE_SIZE));
+		int broadcastedMessagesQueueSize = nodeManagement.getConfigFile().
+			getProperty("BroadcastedMessagesQueueSize", DEFAULT_BROADCASTED_MESSAGES_QUEUE_SIZE);
+		broadcastedMessagesQueue = new LinkedBlockingQueue<MessageContainer>(broadcastedMessagesQueueSize);
 		
 		synchronizationTime = new ConcurrentHashMap<String, Long>();
 	}
@@ -59,13 +65,13 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		// create the random generator for the gossip probability
 		Random rand = new Random();
 		
-		for(String nodeId : ((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().getClusterAdmimnistration()).getGroupNodes()){
+		for(String nodeId : ((ClusterAdministrationImpl) nodeManagement.getConnectionManager().getClusterAdmimnistration()).getGroupNodes()){
 			if(rand.nextDouble() < gossipProbability){
 				logger.debug("Sending the message to node [" + nodeId + "]");
-				if(!ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).getGroupCommunication()
+				if(!nodeManagement.getConnectionManager().getConnectionManager(nodeId).getGroupCommunication()
 						.getListener().onMessageArrive(message)){
 					// lowering the gossip probability
-					gossipProbability -= 1/((ClusterAdministrationImpl)ConnectionManagerImpl.getInstance().
+					gossipProbability -= 1/((ClusterAdministrationImpl)nodeManagement.getConnectionManager().
 							getClusterAdmimnistration()).getGroupNodes().size();
 					logger.debug("Gossip probability lowered to " + gossipProbability);
 				} else {
@@ -93,7 +99,7 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		logger.debug("Sending message [" + message + "] to node [" + nodeId + "]");
 
 		// get the connection manager of the node id and then execute his onMessageArrive
-		return ConnectionManagerImpl.getInstance().getConnectionManager(nodeId).getGroupCommunication().
+		return nodeManagement.getConnectionManager().getConnectionManager(nodeId).getGroupCommunication().
 			getListener().onMessageArrive(message);
 	}
 
@@ -153,17 +159,19 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 	}
 	
 	public void startMessageProcessing(){
+		long messageExpirationTime = nodeManagement.getConfigFile().getProperty("MessageExpirationTime", DEFAULT_MESSAGE_EXPIRATION_TIME);
+		
 		// start the message depurator to empty the list of broadcasted messages after their timestamp has expired  
-		MessageDepurator messageDepurator = new MessageDepurator(broadcastedMessagesQueue);
+		MessageDepurator messageDepurator = new MessageDepurator(broadcastedMessagesQueue, messageExpirationTime);
 		new Thread(messageDepurator).start();
 		
 		// start the message processor to process the arriving messages
-		MessageProcessor messageProcessor = new MessageProcessor(messagesQueue);
+		MessageProcessor messageProcessor = new MessageProcessor(nodeManagement, messagesQueue);
 		new Thread(messageProcessor).start();
 		
 		// start the message requester to get the new messages from every group node
-		if(NodeManagement.getConfigFile().getProperty("MessageRequesterEnabled", false)){
-			MessageRequester messageRequester = new MessageRequester();
+		if(nodeManagement.getConfigFile().getProperty("MessageRequesterEnabled", false)){
+			MessageRequester messageRequester = new MessageRequester(nodeManagement);
 			new Thread(messageRequester).start();
 		}
 	}

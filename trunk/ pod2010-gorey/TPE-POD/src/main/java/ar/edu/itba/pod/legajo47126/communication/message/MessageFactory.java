@@ -10,7 +10,6 @@ import ar.edu.itba.pod.legajo47126.communication.paylod.NodeAgentLoadRequestPayl
 import ar.edu.itba.pod.legajo47126.communication.paylod.NodeMarketDataPayloadImpl;
 import ar.edu.itba.pod.legajo47126.communication.paylod.NodeMarketDataRequestPayloadImpl;
 import ar.edu.itba.pod.legajo47126.communication.paylod.ResourceRequestPayloadImpl;
-import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.MarketData;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.MessageType;
@@ -25,8 +24,8 @@ public class MessageFactory {
 	 * @param disconnectedNodeId nodeId of the node being desconected 
 	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
 	 */
-	public static Message DisconnectMessage(String disconnectedNodeId){
-		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
+	public static Message DisconnectMessage(String nodeId, String disconnectedNodeId){
+		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.DISCONNECT, new DisconnectPayloadImpl(disconnectedNodeId));
 	}
 	
@@ -37,8 +36,8 @@ public class MessageFactory {
 	 * 
 	 * @return a message containing the local node as sender, the current timestamp, and the propper payload 
 	 */
-	public static Message NewMessageRequest(){
-		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
+	public static Message NewMessageRequest(String nodeId){
+		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.NEW_MESSAGE_REQUEST, new NewMessageRequestPayloadImpl());
 	}
 	
@@ -47,8 +46,8 @@ public class MessageFactory {
 	 * 
 	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
 	 */
-	public static Message NewMessageResponse(){
-		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
+	public static Message NewMessageResponse(String nodeId){
+		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.NEW_MESSAGE_RESPONSE, new NewMessageResponsePayloadImpl());
 	}
 	
@@ -57,10 +56,10 @@ public class MessageFactory {
 	 * 
 	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
 	 */
-	public static Message NodeAgentLoadMessage(){
-		int load = NodeManagement.getSimulationManager().getAgentsLoad();
+	public static Message NodeAgentLoadMessage(String nodeId, int load){
+//		int load = NodeManagement.getSimulationManager().getAgentsLoad();
 		
-		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
+		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.NODE_AGENTS_LOAD, new NodeAgentLoadPayloadImpl(load));
 	}
 	
@@ -69,30 +68,30 @@ public class MessageFactory {
 	 * 
 	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
 	 */
-	public static Message NodeAgentLoadRequestMessage(){
-		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
+	public static Message NodeAgentLoadRequestMessage(String nodeId){
+		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.NODE_AGENTS_LOAD_REQUEST, new NodeAgentLoadRequestPayloadImpl());
 	}
 	
-	public static Message NodeMarketDataMessage(){
+	public static Message NodeMarketDataMessage(String nodeId){
 		MarketData marketData = null;	//TODO get the propper market data
 		
-		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
+		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.NODE_MARKET_DATA, new NodeMarketDataPayloadImpl(marketData));
 	}
 	
-	public static Message NodeMarketDataRequestMessage(){
-		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
+	public static Message NodeMarketDataRequestMessage(String nodeId){
+		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.NODE_MARKET_DATA_REQUEST, new NodeMarketDataRequestPayloadImpl());
 	}
 	
-	public static Message ResourceRequestMessage(Resource resource, int amountRequested){
-		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
+	public static Message ResourceRequestMessage(String nodeId, Resource resource, int amountRequested){
+		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.RESOURCE_REQUEST, new ResourceRequestPayloadImpl(resource, amountRequested));
 	}
 	
-	public static Message ResourceTransferMessage(Payload payload){
-		return new Message(NodeManagement.getLocalNode().getNodeId(), new DateTime().getMillis(), 
+	public static Message ResourceTransferMessage(String nodeId, Payload payload){
+		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.RESOURCE_TRANSFER, payload);
 	}
 }

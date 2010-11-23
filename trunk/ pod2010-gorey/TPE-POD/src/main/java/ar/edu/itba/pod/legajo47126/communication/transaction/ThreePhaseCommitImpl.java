@@ -7,7 +7,6 @@ import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
@@ -25,8 +24,12 @@ public class ThreePhaseCommitImpl implements ThreePhaseCommit {
 	
 	private ThreePhaseCommitState state;
 	
-	public ThreePhaseCommitImpl() throws RemoteException {
+	private NodeManagement nodeManagement;
+	
+	public ThreePhaseCommitImpl(NodeManagement nodeManagement) throws RemoteException {
 		UnicastRemoteObject.exportObject(this, 0);
+		
+		this.nodeManagement = nodeManagement;
 		
 		state = ThreePhaseCommitState.START;
 	}
@@ -76,13 +79,13 @@ public class ThreePhaseCommitImpl implements ThreePhaseCommit {
 		if(state != ThreePhaseCommitState.PRE_COMMIT_DONE)
 			throw new IllegalArgumentException("The current state isn't PRE_COMMIT_DONE");
 		
-		Payload payload = ConnectionManagerImpl.getInstance().getConnectionManager(coordinatorId).
+		Payload payload = nodeManagement.getConnectionManager().getConnectionManager(coordinatorId).
 			getNodeCommunication().getPayload();
-		Message message = MessageFactory.ResourceTransferMessage(payload);
+		Message message = MessageFactory.ResourceTransferMessage(nodeManagement.getLocalNode().getNodeId(), payload);
 
 		// send the message to the local node
 		logger.debug("Sending the message [" + message + "] to the local node");
-		ConnectionManagerImpl.getInstance().getGroupCommunication().send(message, NodeManagement.getLocalNode().getNodeId());
+		nodeManagement.getConnectionManager().getGroupCommunication().send(message, nodeManagement.getLocalNode().getNodeId());
 		
 		// set the next state
 		logger.debug("Setting next state DO_COMMIT_DONE");

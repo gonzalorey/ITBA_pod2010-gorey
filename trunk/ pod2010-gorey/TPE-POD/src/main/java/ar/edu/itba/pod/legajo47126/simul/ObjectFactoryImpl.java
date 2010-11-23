@@ -6,7 +6,6 @@ import java.rmi.RemoteException;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.ObjectFactory;
 import ar.edu.itba.pod.simul.communication.ConnectionManager;
@@ -26,7 +25,7 @@ public class ObjectFactoryImpl implements ObjectFactory {
 		String[] args = {localIp};
 		try {
 			nodeManagement = new NodeManagement(args);
-			return ConnectionManagerImpl.getInstance();
+			return nodeManagement.getConnectionManager();
 		} catch (UnknownHostException e) {
 			logger.fatal("The local node couldn't be started. Aborting execution");
 			logger.fatal("Error message: " + e.getMessage());
@@ -48,7 +47,7 @@ public class ObjectFactoryImpl implements ObjectFactory {
 	public ConnectionManager createConnectionManager(String localIp, String groupIp) {
 		if(createConnectionManager(localIp) != null){
 			try {
-				ConnectionManagerImpl.getInstance().getClusterAdmimnistration().connectToGroup(groupIp);
+				nodeManagement.getConnectionManager().getClusterAdmimnistration().connectToGroup(groupIp);
 			} catch (RemoteException e) {
 				logger.error("An error ocurred while connecting to the group");
 				logger.equals("Error message: " + e.getMessage());
