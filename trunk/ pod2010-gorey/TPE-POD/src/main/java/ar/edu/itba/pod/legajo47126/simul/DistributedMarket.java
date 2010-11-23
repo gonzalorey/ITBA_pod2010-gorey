@@ -9,6 +9,7 @@ import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.local.LocalMarket;
+import ar.edu.itba.pod.simul.market.Resource;
 import ar.edu.itba.pod.simul.market.ResourceStock;
 
 import com.google.common.collect.ConcurrentHashMultiset;
@@ -100,7 +101,22 @@ public class DistributedMarket extends LocalMarket {
 		}
 	}
 	
-	public void addToRemoteSelling(){
-		
+	public void addToRemoteSelling(Resource resource, int amount){
+		for(ResourceStock seller : remoteSelling){
+			if(seller.resource().equals(resource)){
+				remoteSelling.setCount(seller, remoteSelling.count(seller) + amount);
+				break;
+			}
+		}
+	}
+	
+	public void removeFromSelling(Resource resource, int amount){
+		for(ResourceStock seller : selling){
+			if(seller.resource().equals(resource)){
+				selling.setCount(seller, selling.count(seller) + amount);
+				seller.remove(amount);
+				break;
+			}
+		}
 	}
 }

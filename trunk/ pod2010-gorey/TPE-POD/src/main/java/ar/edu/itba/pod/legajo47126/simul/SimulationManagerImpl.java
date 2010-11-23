@@ -2,15 +2,18 @@ package ar.edu.itba.pod.legajo47126.simul;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.simul.simulation.Agent;
-import ar.edu.itba.pod.simul.simulation.Simulation;
 import ar.edu.itba.pod.simul.simulation.SimulationInspector;
 import ar.edu.itba.pod.simul.simulation.SimulationManager;
+import ar.edu.itba.pod.simul.time.TimeMapper;
+import ar.edu.itba.pod.simul.time.TimeMappers;
 import ar.edu.itba.pod.thread.doc.NotThreadSafe;
+
+import com.google.common.base.Preconditions;
 
 @NotThreadSafe
 public class SimulationManagerImpl implements SimulationManager {
@@ -21,16 +24,24 @@ public class SimulationManagerImpl implements SimulationManager {
 	// singletone instance of the ConnectionManger
 	private static SimulationManagerImpl simulationManager = null;
 	
-	// Maybe the agents should be in the Simulation
-	private ConcurrentLinkedQueue<Agent> localAgents;
+	private DistributedSimulation distributedSimulation;
+	
+	private boolean started;
 	
 	private SimulationManagerImpl() {
-		localAgents = new ConcurrentLinkedQueue<Agent>();
+		TimeMapper timeMapper = TimeMappers.oneSecondEach(6, TimeUnit.HOURS);	// TODO hardcoded, maybe by parameter...
+		distributedSimulation = new DistributedSimulation(timeMapper);
+
+		logger.debug("Registering the distributed simulation");
+		register(DistributedSimulation.class, distributedSimulation);
+		
+		started = false;
 	}
 	
 	public static synchronized SimulationManagerImpl getInstance() {
-		if(simulationManager == null)
+		if(simulationManager == null){
 			SimulationManagerImpl.simulationManager = new SimulationManagerImpl();
+		}
 
 		return SimulationManagerImpl.simulationManager;
 	}
@@ -43,53 +54,52 @@ public class SimulationManagerImpl implements SimulationManager {
 	
 	@Override
 	public void start() {
-		// TODO Auto-generated method stub
+		distributedSimulation.start();
+		started = true;
 	}
 	
 	@Override
 	public void shutdown() {
-		// TODO Auto-generated method stub
+		distributedSimulation.shutdown();
+		started = false;
 	}
 
 	@Override
 	public void addAgent(Agent agent) {
-		localAgents.add(agent);
+		distributedSimulation.addAgent(agent);
 	}
 	
 	@Override
 	public void removeAgent(Agent agent) {
-		if(!localAgents.contains(agent.getAgentDescriptor()))
-			logger.warn("The agent doesn't belong to the map");
-		localAgents.remove(agent.getAgentDescriptor());
+		distributedSimulation.removeAgent(agent);
 	}
 
 	@Override
-	public Simulation simulation() {
-		// TODO Auto-generated method stub
-		return null;
+	public DistributedSimulation simulation() {
+		Preconditions.checkState(this.started, "No simulation has been started!");
+		return distributedSimulation;
 	}
 	
 	@Override
 	public SimulationInspector inspector() {
-		// TODO Auto-generated method stub
-		return null;
+		return simulation();
 	}
 	
 	@Override
 	public <T> void register(Class<T> type, T instance) {
-		// TODO Auto-generated method stub
+		distributedSimulation.register(type, instance);
 	}
 	
 	@Override
 	public Collection<Agent> getAgents() {
-		return new CopyOnWriteArrayList<Agent>(localAgents);
+		return distributedSimulation.getAgents();
 	}
 	
 	public int getAgentsLoad() {
-		return localAgents.size();
+		return distributedSimulation.getAgentsLoad();
 	}
 	
 	public ConcurrentLinkedQueue<Agent> getAgentsLoadQueue(){
-		return localAgents;
+		return distributedSimulation.getAgentsLoadQueue();
 	}
 }

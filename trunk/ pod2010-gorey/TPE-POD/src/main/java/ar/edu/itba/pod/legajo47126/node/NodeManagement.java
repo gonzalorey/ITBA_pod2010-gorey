@@ -21,13 +21,17 @@ import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
 import ar.edu.itba.pod.legajo47126.simul.AgentFactory;
+import ar.edu.itba.pod.legajo47126.simul.MarketManagerImpl;
 import ar.edu.itba.pod.legajo47126.simul.SimulationManagerImpl;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.DisconnectionCoordinator;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewAgentCoordinator;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewNodeCoordinator;
 import ar.edu.itba.pod.simul.communication.Message;
+import ar.edu.itba.pod.simul.market.MarketManager;
 import ar.edu.itba.pod.simul.market.Resource;
 import ar.edu.itba.pod.simul.simulation.Agent;
+import ar.edu.itba.pod.simul.ui.ConsoleFeedbackCallback;
+import ar.edu.itba.pod.simul.ui.FeedbackMarketManager;
 
 public class NodeManagement {
 	
@@ -39,6 +43,9 @@ public class NodeManagement {
 	
 	// configuration file with the loaded properties
 	private static ConfigFile configFile;
+	
+	// instance of the market manager
+	private static MarketManager marketManager;
 	
 	// load of every known node
 	private static NodeKnownAgentsLoad nodeKnownAgentsLoad;	// TODO should go in SimulationCommunicationImpl...
@@ -76,6 +83,15 @@ public class NodeManagement {
 			return;
 		}
 		
+		// instance the market manager
+		logger.info("Starting the Market Manager...");
+		marketManager = new MarketManagerImpl();
+		marketManager = new FeedbackMarketManager(new ConsoleFeedbackCallback(), marketManager);
+		marketManager.start();
+		
+		SimulationManagerImpl.getInstance().start();
+		logger.info("Simulation Manager started");
+		
 		// instance the node agents load
 		nodeKnownAgentsLoad = new NodeKnownAgentsLoad();
 		
@@ -108,6 +124,14 @@ public class NodeManagement {
 	
 	public static ConfigFile getConfigFile() {
 		return configFile;
+	}
+	
+	public static MarketManagerImpl getManagerImpl() {
+		return (MarketManagerImpl)marketManager;
+	}
+
+	public static NodeKnownAgentsLoad getNodeKnownAgentsLoad(){
+		return nodeKnownAgentsLoad;
 	}
 
 	// command line parser
@@ -269,39 +293,10 @@ public class NodeManagement {
 				} else if(cmd.hasOption(requestresource.getOpt())){
 					// get the node to communicate to
 					String remoteNodeId = cmd.getOptionValue(requestresource.getOpt());
+					Message message = MessageFactory.ResourceRequestMessage(new Resource("Mineral", "Pig Iron"), 2);
 					
-					// create the resource and it's amount
-					Resource resource = new Resource("Mineral", "Pig Iron");		//TODO hardcoded, take it OUT
-					int amount = 2;
-					
-					long timeout = configFile.getProperty("TransactionTimeout", 1000);
-					
-					try{
-						// begin the transaction with the remote node
-						logger.info("Beginning transaction with [" + remoteNodeId + "] with a timeout [" + timeout + "]");
-						ConnectionManagerImpl.getInstance().getNodeCommunication().beginTransaction(remoteNodeId, timeout);
-						
-						// exchange my resources
-						logger.info("Exchanging an amount of [" + amount + "] of resource [" + resource + "]");
-						ConnectionManagerImpl.getInstance().getNodeCommunication().exchange(resource, amount, 
-								NodeManagement.getLocalNode().getNodeId(), remoteNodeId);
-												
-						// end the transaction
-						logger.info("Ending the transaction");
-						ConnectionManagerImpl.getInstance().getNodeCommunication().endTransaction();
-					} catch (Exception e) {
-						logger.error("There was an error during the transaction, aborting...");
-						logger.error("Error message: " + e.getMessage());
-						
-						try{
-							// rollback the transactions
-							logger.info("Rollback the transaction");
-							ConnectionManagerImpl.getInstance().getNodeCommunication().rollback();
-						} catch (Exception e1) {
-							logger.error("There was an error during the transaction abort");
-							logger.error("Error message: " + e1.getMessage());
-						}
-					}
+					logger.info("Sending message [" + message + "] to node [" + remoteNodeId + "]");
+					ConnectionManagerImpl.getInstance().getGroupCommunication().send(message, remoteNodeId);
 					
 				} else if(cmd.hasOption(getknownnodes.getOpt())){
 					logger.info("Getting the known nodes list...");
@@ -337,6 +332,8 @@ public class NodeManagement {
 					helpFormatter.printHelp("-command_name [args]", options);
 				} else if(cmd.hasOption(exit.getOpt())){
 					logger.info("Exiting...");
+					SimulationManagerImpl.getInstance().shutdown();
+					marketManager.shutdown();
 					break;
 				} else{
 					logger.info("Wrong command, type -help for more information");
@@ -353,8 +350,5 @@ public class NodeManagement {
 		
 	}
 	
-	public static NodeKnownAgentsLoad getNodeKnownAgentsLoad(){
-		return nodeKnownAgentsLoad;
-	}
 	
 }
