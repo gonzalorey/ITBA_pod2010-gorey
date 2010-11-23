@@ -21,56 +21,40 @@ public class SimulationManagerImpl implements SimulationManager {
 	// instance of the log4j logger
 	private static Logger logger = Logger.getLogger(SimulationManagerImpl.class);
 		
-	// singletone instance of the ConnectionManger
-	private static SimulationManagerImpl simulationManager = null;
-	
 	private DistributedSimulation distributedSimulation;
 	
-	private boolean started;
+	private boolean started = false;
 	
-	private SimulationManagerImpl() {
+	public SimulationManagerImpl() {
 		TimeMapper timeMapper = TimeMappers.oneSecondEach(6, TimeUnit.HOURS);	// TODO hardcoded, maybe by parameter...
 		distributedSimulation = new DistributedSimulation(timeMapper);
-
-		logger.debug("Registering the distributed simulation");
-		register(DistributedSimulation.class, distributedSimulation);
-		
-		started = false;
-	}
-	
-	public static synchronized SimulationManagerImpl getInstance() {
-		if(simulationManager == null){
-			SimulationManagerImpl.simulationManager = new SimulationManagerImpl();
-		}
-
-		return SimulationManagerImpl.simulationManager;
-	}
-		
-	@Override
-	protected Object clone() throws CloneNotSupportedException {
-		// it won't be cloned now either
-		throw new CloneNotSupportedException();
 	}
 	
 	@Override
 	public void start() {
+		logger.info("Starting simulation...");
 		distributedSimulation.start();
 		started = true;
+		logger.info("Simulation started");
 	}
 	
 	@Override
 	public void shutdown() {
-		distributedSimulation.shutdown();
+		logger.info("Ending simulation...");
+		simulation().shutdown();
 		started = false;
+		logger.info("Simulation ended");
 	}
 
 	@Override
 	public void addAgent(Agent agent) {
+		logger.info("Adding agent...");
 		distributedSimulation.addAgent(agent);
 	}
 	
 	@Override
 	public void removeAgent(Agent agent) {
+		logger.info("Removing agent...");
 		distributedSimulation.removeAgent(agent);
 	}
 
@@ -87,6 +71,7 @@ public class SimulationManagerImpl implements SimulationManager {
 	
 	@Override
 	public <T> void register(Class<T> type, T instance) {
+		logger.info("Registering type " +  type.getSimpleName());
 		distributedSimulation.register(type, instance);
 	}
 	

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
+import java.util.Collection;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -27,10 +28,13 @@ import ar.edu.itba.pod.legajo47126.simul.coordinator.DisconnectionCoordinator;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewAgentCoordinator;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewNodeCoordinator;
 import ar.edu.itba.pod.simul.communication.Message;
+import ar.edu.itba.pod.simul.market.Market;
 import ar.edu.itba.pod.simul.market.MarketManager;
 import ar.edu.itba.pod.simul.market.Resource;
 import ar.edu.itba.pod.simul.simulation.Agent;
+import ar.edu.itba.pod.simul.simulation.SimulationManager;
 import ar.edu.itba.pod.simul.ui.ConsoleFeedbackCallback;
+import ar.edu.itba.pod.simul.ui.FeedbackCallback;
 import ar.edu.itba.pod.simul.ui.FeedbackMarketManager;
 
 public class NodeManagement {
@@ -46,6 +50,9 @@ public class NodeManagement {
 	
 	// instance of the market manager
 	private static MarketManager marketManager;
+	
+	// instance of the simulation manager
+	private static SimulationManager simulationManager;
 	
 	// load of every known node
 	private static NodeKnownAgentsLoad nodeKnownAgentsLoad;	// TODO should go in SimulationCommunicationImpl...
@@ -82,15 +89,24 @@ public class NodeManagement {
 			
 			return;
 		}
+
+		FeedbackCallback callback = new ConsoleFeedbackCallback();
 		
-		// instance the market manager
 		logger.info("Starting the Market Manager...");
 		marketManager = new MarketManagerImpl();
-		marketManager = new FeedbackMarketManager(new ConsoleFeedbackCallback(), marketManager);
+		marketManager = new FeedbackMarketManager(callback, marketManager);
 		marketManager.start();
+		logger.info("Market Manager started");
 		
-		SimulationManagerImpl.getInstance().start();
-		logger.info("Simulation Manager started");
+		// obtain the reference to the market
+		Market market = marketManager.market();
+		
+		// instance the simulation manager
+		simulationManager = new SimulationManagerImpl();
+//		simulationManager = new FeedbackSimulationManager(callback, simulationManager);
+		
+		// register the market in the simulation
+		simulationManager.register(Market.class, market);
 		
 		// instance the node agents load
 		nodeKnownAgentsLoad = new NodeKnownAgentsLoad();
@@ -126,8 +142,12 @@ public class NodeManagement {
 		return configFile;
 	}
 	
-	public static MarketManagerImpl getManagerImpl() {
+	public static MarketManagerImpl getMarketManager() {
 		return (MarketManagerImpl)marketManager;
+	}
+	
+	public static SimulationManagerImpl getSimulationManager(){
+		return (SimulationManagerImpl)simulationManager;
 	}
 
 	public static NodeKnownAgentsLoad getNodeKnownAgentsLoad(){
@@ -142,9 +162,12 @@ public class NodeManagement {
 	// console command options
 	private static Option connect;
 	private static Option creategroup;
-	private static Option createagent;
+	private static Option createagents;
+	private static Option createproducer;
+	private static Option createconsumer;
 	private static Option getload;
 	private static Option requestresource;
+	private static Option startsimulation;
 	private static Option getknownnodes;	// TODO should dissapear
 	private static Option getgroupnodes;	// TODO should dissapear
 	private static Option send;				// TODO should dissapear
@@ -165,16 +188,25 @@ public class NodeManagement {
 		
 		creategroup = new Option("creategroup", "Creates a group");
 		
-		createagent = new Option("createagent", "Creates an agent");
-		createagent.setArgs(1);
-		createagent.setArgName("numberOfAgents");
-		createagent.setOptionalArg(true);
+		createagents = new Option("createagents", "Creates a group of agents to test the simulation");
+		
+		createproducer = new Option("createproducer", "Creates an producer agent");
+		createproducer.setArgs(1);
+		createproducer.setArgName("numberOfAgents");
+		createproducer.setOptionalArg(true);
+		
+		createconsumer = new Option("createconsumer", "Creates an consumer agent");
+		createconsumer.setArgs(1);
+		createconsumer.setArgName("numberOfAgents");
+		createconsumer.setOptionalArg(true);
 		
 		getload = new Option("getload", "Get the node agents load");
 		
 		requestresource = new Option("requestresource", "Requests a resource");
 		requestresource.setArgs(1);
 		requestresource.setArgName("nodeId");
+		
+		startsimulation = new Option("startsimulation", "Starts the simulation");
 		
 		getknownnodes = new Option("getknownnodes", "Lists the known nodes");
 		
@@ -191,9 +223,12 @@ public class NodeManagement {
 		options.addOption(connect);
 		options.addOption(disconnect);
 		options.addOption(creategroup);
-		options.addOption(createagent);
+		options.addOption(createagents);
+		options.addOption(createproducer);
+		options.addOption(createconsumer);
 		options.addOption(getload);
 		options.addOption(requestresource);
+		options.addOption(startsimulation);
 		options.addOption(getknownnodes);
 		options.addOption(getgroupnodes);
 		options.addOption(send);
@@ -259,24 +294,67 @@ public class NodeManagement {
 						logger.error("There was an error during the creation of the node group");
 						logger.error("Error message:" + e.getMessage());
 					}
-				} else if(cmd.hasOption(createagent.getOpt())){
-					logger.info("Creating an agent...");
+				} else if(cmd.hasOption(createagents.getOpt())){
+					logger.info("Creating agents to test the simulation...");
+					
+					try{
+						Collection<Agent> simulationAgents = AgentFactory.createSimulationAgents();
+						for(Agent agent : simulationAgents){
+							ConnectionManagerImpl.getInstance().getSimulationCommunication().startAgent(agent.getAgentDescriptor());
+							logger.info("Producer agent " + agent + " successfully added to the node");
+						}
+
+						Thread thread = new Thread(new NewNodeCoordinator());
+						thread.start();
+					} catch (RemoteException e) {
+						logger.error("There was an error during the creation of the agents");
+						logger.error("Error message:" + e.getMessage());
+					}
+				} else if(cmd.hasOption(createproducer.getOpt())){
+					logger.info("Creating a producer agent...");
 
 					int numberOfAgents = 1;
-					if(cmd.getOptionValue(createagent.getOpt()) != null) {
-						numberOfAgents = Integer.valueOf(cmd.getOptionValue(createagent.getOpt()));
+					if(cmd.getOptionValue(createproducer.getOpt()) != null) {
+						numberOfAgents = Integer.valueOf(cmd.getOptionValue(createproducer.getOpt()));
 					}
 					
 					if(numberOfAgents == 1){
-						Agent agent = AgentFactory.CreateAgent();
+						Agent agent = AgentFactory.createProducerAgent();
 						Thread thread = new Thread(new NewAgentCoordinator(agent));
 						thread.start();
 					} else {
 						try{
 							for(int i = 0; i < numberOfAgents; i++){
-								Agent agent = AgentFactory.CreateAgent();
+								Agent agent = AgentFactory.createProducerAgent();
 								ConnectionManagerImpl.getInstance().getSimulationCommunication().startAgent(agent.getAgentDescriptor());
-								logger.info("Agent " + agent + " successfully added to the node");
+								logger.info("Producer agent " + agent + " successfully added to the node");
+							}
+							
+							Thread thread = new Thread(new NewNodeCoordinator());
+							thread.start();
+						} catch (RemoteException e) {
+							logger.error("There was an error during the creation of the agent");
+							logger.error("Error message:" + e.getMessage());
+						}
+					}
+				} else if(cmd.hasOption(createconsumer.getOpt())){
+					logger.info("Creating a consumer agent...");
+
+					int numberOfAgents = 1;
+					if(cmd.getOptionValue(createconsumer.getOpt()) != null) {
+						numberOfAgents = Integer.valueOf(cmd.getOptionValue(createconsumer.getOpt()));
+					}
+					
+					if(numberOfAgents == 1){
+						Agent agent = AgentFactory.createConsumerAgent();
+						Thread thread = new Thread(new NewAgentCoordinator(agent));
+						thread.start();
+					} else {
+						try{
+							for(int i = 0; i < numberOfAgents; i++){
+								Agent agent = AgentFactory.createConsumerAgent();
+								ConnectionManagerImpl.getInstance().getSimulationCommunication().startAgent(agent.getAgentDescriptor());
+								logger.info("Consumer agent " + agent + " successfully added to the node");
 							}
 							
 							Thread thread = new Thread(new NewNodeCoordinator());
@@ -288,7 +366,7 @@ public class NodeManagement {
 					}
 				} else if(cmd.hasOption(getload.getOpt())){
 					logger.info("Getting the node agents load...");
-					int load = SimulationManagerImpl.getInstance().getAgentsLoad();
+					int load = NodeManagement.getSimulationManager().getAgentsLoad();
 					logger.info("Node agents load " + load);
 				} else if(cmd.hasOption(requestresource.getOpt())){
 					// get the node to communicate to
@@ -297,6 +375,10 @@ public class NodeManagement {
 					
 					logger.info("Sending message [" + message + "] to node [" + remoteNodeId + "]");
 					ConnectionManagerImpl.getInstance().getGroupCommunication().send(message, remoteNodeId);
+					
+				} else if(cmd.hasOption(startsimulation.getOpt())){
+					// start the simulation
+					simulationManager.start();
 					
 				} else if(cmd.hasOption(getknownnodes.getOpt())){
 					logger.info("Getting the known nodes list...");
@@ -332,7 +414,7 @@ public class NodeManagement {
 					helpFormatter.printHelp("-command_name [args]", options);
 				} else if(cmd.hasOption(exit.getOpt())){
 					logger.info("Exiting...");
-					SimulationManagerImpl.getInstance().shutdown();
+					NodeManagement.getSimulationManager().shutdown();
 					marketManager.shutdown();
 					break;
 				} else{

@@ -9,16 +9,13 @@ public class MarketManagerImpl implements MarketManager {
 	
 	@Override
 	public void start() {
+		distributedMarket = new DistributedMarket();
 		distributedMarket.start();
 	}
 	
 	@Override
 	public void shutdown() {
 		distributedMarket.finish();
-	}
-	
-	public MarketManagerImpl() {
-		distributedMarket = new DistributedMarket();
 	}
 	
 	@Override

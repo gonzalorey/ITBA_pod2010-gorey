@@ -6,8 +6,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
-
 import ar.edu.itba.pod.simul.simulation.Agent;
 import ar.edu.itba.pod.simul.simulation.Simulation;
 import ar.edu.itba.pod.simul.simulation.SimulationEvent;
@@ -28,7 +26,7 @@ import com.google.common.collect.Maps;
 public class DistributedSimulation implements Simulation, SimulationInspector{
 	
 	// instance of the log4j logger
-	private static Logger logger = Logger.getLogger(SimulationManagerImpl.class);
+	//private static Logger logger = Logger.getLogger(SimulationManagerImpl.class);
 
 	// Maybe the agents should be in the Simulation
 	private ConcurrentLinkedQueue<Agent> localAgents;
@@ -87,12 +85,21 @@ public class DistributedSimulation implements Simulation, SimulationInspector{
 		Preconditions.checkArgument(!localAgents.contains(agent), "Can't add an agent twice!");
 		
 		localAgents.add(agent);
+		agent.onBind(this);
 	}
 	
 	public void removeAgent(Agent agent) {
-		if(!localAgents.contains(agent.getAgentDescriptor()))
-			logger.warn("The agent doesn't belong to the map");
-		localAgents.remove(agent.getAgentDescriptor());
+		Preconditions.checkArgument(localAgents.contains(agent), "The agent is not part of this simulation!");
+		try {
+			synchronized (agent) {
+				agent.finish();
+				agent.wait();
+			}
+		}
+		catch (InterruptedException e) {
+			throw new IllegalStateException("Interrupted while removing an agent!");
+		}
+		localAgents.remove(agent);
 	}
 
 	public Collection<Agent> getAgents() {
@@ -111,7 +118,6 @@ public class DistributedSimulation implements Simulation, SimulationInspector{
 		for(Agent agent : localAgents){
 			agent.start();
 		}
-		
 	}
 
 	/**
@@ -138,7 +144,7 @@ public class DistributedSimulation implements Simulation, SimulationInspector{
 	}
 	
 	public <T> void register(Class<T> type, T instance) {
-		this.env.put(type, instance);
+		env.put(type, instance);
 	}
 
 }

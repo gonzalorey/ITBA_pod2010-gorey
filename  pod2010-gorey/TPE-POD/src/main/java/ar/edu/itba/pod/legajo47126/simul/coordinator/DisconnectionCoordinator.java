@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
-import ar.edu.itba.pod.legajo47126.simul.SimulationManagerImpl;
 import ar.edu.itba.pod.simul.communication.AgentDescriptor;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.NodeAgentLoad;
@@ -27,7 +26,7 @@ public class DisconnectionCoordinator implements Runnable{
 	@Override
 	public void run() {
 		
-		if(SimulationManagerImpl.getInstance().getAgentsLoad() == 0){
+		if(NodeManagement.getSimulationManager().getAgentsLoad() == 0){
 			logger.debug("Nothing to distribute, coordination ended");
 			return;
 		}
@@ -63,7 +62,7 @@ public class DisconnectionCoordinator implements Runnable{
 		}
 		
 		int loadPerNode = (NodeManagement.getNodeKnownAgentsLoad().getTotalLoad() 
-			+ SimulationManagerImpl.getInstance().getAgentsLoad())
+			+ NodeManagement.getSimulationManager().getAgentsLoad())
 			/ NodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size();
 	
 		ConcurrentLinkedQueue<AgentDescriptor> remainingAgents = new ConcurrentLinkedQueue<AgentDescriptor>();
@@ -71,8 +70,8 @@ public class DisconnectionCoordinator implements Runnable{
 
 		// migrate the local node agents
 		try {
-			for(AgentDescriptor agentDescriptor : ConnectionManagerImpl.getInstance().
-					getSimulationCommunication().migrateAgents(SimulationManagerImpl.getInstance().getAgentsLoad())){
+			for(AgentDescriptor agentDescriptor : ConnectionManagerImpl.getInstance().getSimulationCommunication().
+					migrateAgents(NodeManagement.getSimulationManager().getAgentsLoad())){
 				remainingAgents.add(agentDescriptor);
 			}
 		} catch (RemoteException e) {
