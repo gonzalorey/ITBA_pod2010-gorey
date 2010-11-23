@@ -6,7 +6,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
+import ar.edu.itba.pod.legajo47126.node.NodeKnownAgentsLoad;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
+import ar.edu.itba.pod.legajo47126.simul.SimulationCommunicationImpl;
 import ar.edu.itba.pod.simul.communication.AgentDescriptor;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.NodeAgentLoad;
@@ -33,8 +35,17 @@ public class DisconnectionCoordinator implements Runnable{
 			return;
 		}
 		
-		// reset the node agents load
-		nodeManagement.getNodeKnownAgentsLoad().reset();
+		// get the node agents load
+		NodeKnownAgentsLoad nodeKnownAgentsLoad;
+		try {
+			nodeKnownAgentsLoad = ((SimulationCommunicationImpl) nodeManagement.getConnectionManager().
+					getSimulationCommunication()).getNodeKnownAgentsLoad();
+		} catch (RemoteException e) {
+			logger.error("There was an error while trying to get the node known agents load");
+			logger.error("Error message: " + e.getMessage());
+			return;
+		}
+		nodeKnownAgentsLoad.reset();
 		
 		// broadcast a message saying that the local node is the new coordinator
 		logger.debug("Start coordinating, inform all the others");
@@ -57,15 +68,14 @@ public class DisconnectionCoordinator implements Runnable{
 		
 		logger.debug("Waiting time ended, redistributing the node agents load...");
 		
-		if(nodeManagement.getNodeKnownAgentsLoad().getTotalLoad() == 0 || 
-				nodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size() == 0){
+		if(nodeKnownAgentsLoad.getTotalLoad() == 0 || 
+				nodeKnownAgentsLoad.getNodesLoad().size() == 0){
 			logger.debug("No nodes to distribute the load, coordination ended");
 			return;
 		}
 		
-		int loadPerNode = (nodeManagement.getNodeKnownAgentsLoad().getTotalLoad() 
-			+ nodeManagement.getSimulationManager().getAgentsLoad())
-			/ nodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size();
+		int loadPerNode = (nodeKnownAgentsLoad.getTotalLoad() + nodeManagement.getSimulationManager().getAgentsLoad())
+			/ nodeKnownAgentsLoad.getNodesLoad().size();
 	
 		ConcurrentLinkedQueue<AgentDescriptor> remainingAgents = new ConcurrentLinkedQueue<AgentDescriptor>();
 		ConcurrentLinkedQueue<NodeAgentLoad> lowOnAgentsNodes = new ConcurrentLinkedQueue<NodeAgentLoad>();
@@ -81,7 +91,7 @@ public class DisconnectionCoordinator implements Runnable{
 			logger.error("Error message:" +  e.getMessage());
 		}
 
-		for(NodeAgentLoad nodeAgentLoad : nodeManagement.getNodeKnownAgentsLoad().getNodesLoad()){
+		for(NodeAgentLoad nodeAgentLoad : nodeKnownAgentsLoad.getNodesLoad()){
 			int numberOfNodeRemainingAgents = nodeAgentLoad.getNumberOfAgents() - loadPerNode;
 			
 			if(numberOfNodeRemainingAgents > 0){
@@ -116,7 +126,7 @@ public class DisconnectionCoordinator implements Runnable{
 			logger.debug(remainingAgents.size() + " remaining, give them the first in the list");
 			
 			try {
-				giveAgents(nodeManagement.getNodeKnownAgentsLoad().getNodesLoad().peek().getNodeId(), 
+				giveAgents(nodeKnownAgentsLoad.getNodesLoad().peek().getNodeId(), 
 						remainingAgents.size(), remainingAgents);
 			} catch (RemoteException e) {
 				logger.debug("There was an error and the agent/s couldn't be added to the node");

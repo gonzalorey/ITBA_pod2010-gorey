@@ -8,6 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.log4j.Logger;
 
+import ar.edu.itba.pod.legajo47126.node.NodeKnownAgentsLoad;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.AgentDescriptor;
 import ar.edu.itba.pod.simul.communication.NodeAgentLoad;
@@ -19,12 +20,19 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 	// instance of the log4j logger
 	private static Logger logger = Logger.getLogger(SimulationCommunicationImpl.class);
 	
+	// instance of the Node Management
 	private NodeManagement nodeManagement;
+	
+	// load of every known node
+	private NodeKnownAgentsLoad nodeKnownAgentsLoad;
 	
 	public SimulationCommunicationImpl(NodeManagement nodeManagement) throws RemoteException {
 		UnicastRemoteObject.exportObject(this, 0);
 		
 		this.nodeManagement = nodeManagement;
+		
+		// initialize the node known agents load object
+		nodeKnownAgentsLoad = new NodeKnownAgentsLoad();
 	}
 	
 	@Override
@@ -38,7 +46,7 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 	@Override
 	public NodeAgentLoad getMinimumNodeKnownLoad() throws RemoteException {
 		
-		Iterator<NodeAgentLoad> iter = nodeManagement.getNodeKnownAgentsLoad().getNodesLoad().iterator();  
+		Iterator<NodeAgentLoad> iter = getNodeKnownAgentsLoad().getNodesLoad().iterator();  
 		NodeAgentLoad minimumNodeKnownLoad = iter.next();
 		
 		while(iter.hasNext()){
@@ -71,4 +79,9 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 		
 		return migratingAgents;
 	}
+	
+	public NodeKnownAgentsLoad getNodeKnownAgentsLoad(){
+		return nodeKnownAgentsLoad;
+	}
+	
 }

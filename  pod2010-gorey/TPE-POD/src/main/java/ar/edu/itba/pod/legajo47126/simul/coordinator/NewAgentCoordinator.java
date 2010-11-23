@@ -5,7 +5,9 @@ import java.rmi.RemoteException;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
+import ar.edu.itba.pod.legajo47126.node.NodeKnownAgentsLoad;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
+import ar.edu.itba.pod.legajo47126.simul.SimulationCommunicationImpl;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.NodeAgentLoad;
 import ar.edu.itba.pod.simul.simulation.Agent;
@@ -31,8 +33,17 @@ public class NewAgentCoordinator implements Runnable{
 	@Override
 	public void run() {
 		
-		// reset the node agents load
-		nodeManagement.getNodeKnownAgentsLoad().reset();
+		// get the node agents load and reset it
+		NodeKnownAgentsLoad nodeKnownAgentsLoad;
+		try {
+			nodeKnownAgentsLoad = ((SimulationCommunicationImpl) nodeManagement.getConnectionManager().
+					getSimulationCommunication()).getNodeKnownAgentsLoad();
+		} catch (RemoteException e) {
+			logger.error("There was an error while trying to get the node known agents load");
+			logger.error("Error message: " + e.getMessage());
+			return;
+		}
+		nodeKnownAgentsLoad.reset();
 		
 		// broadcast a message saying that the local node is the new coordinator
 		logger.debug("Start coordinating, inform all the others");
@@ -56,7 +67,7 @@ public class NewAgentCoordinator implements Runnable{
 		logger.debug("Waiting time ended, redistributing the node agents load...");
 		
 		// added the local node load to the list
-		nodeManagement.getNodeKnownAgentsLoad().setNodeLoad(nodeManagement.getLocalNode().getNodeId(), 
+		nodeKnownAgentsLoad.setNodeLoad(nodeManagement.getLocalNode().getNodeId(), 
 				nodeManagement.getSimulationManager().getAgentsLoad());
 		
 		NodeAgentLoad nodeAgentLoad;
