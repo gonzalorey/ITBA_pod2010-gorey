@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.simulation.Agent;
 import ar.edu.itba.pod.simul.simulation.SimulationInspector;
 import ar.edu.itba.pod.simul.simulation.SimulationManager;
@@ -26,7 +27,8 @@ public class SimulationManagerImpl implements SimulationManager {
 	private boolean started = false;
 	
 	public SimulationManagerImpl() {
-		TimeMapper timeMapper = TimeMappers.oneSecondEach(6, TimeUnit.HOURS);	// TODO hardcoded, maybe by parameter...
+		int amountOfHoursPerSecond = NodeManagement.getConfigFile().getProperty("AmountOfHoursPerSecond", 6); 
+		TimeMapper timeMapper = TimeMappers.oneSecondEach(amountOfHoursPerSecond, TimeUnit.HOURS);
 		distributedSimulation = new DistributedSimulation(timeMapper);
 	}
 	

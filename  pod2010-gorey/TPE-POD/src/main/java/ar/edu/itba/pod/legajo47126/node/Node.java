@@ -37,6 +37,7 @@ public class Node implements ReferenceName, RegistryPort{
 	 * @param port port to listen to incoming connections
 	 * @throws UnknownHostException
 	 */
+	@Deprecated
 	public Node(String address, int port) throws UnknownHostException {
 		// get the address and port
 		this.inetAddress = InetAddress.getByName(address);

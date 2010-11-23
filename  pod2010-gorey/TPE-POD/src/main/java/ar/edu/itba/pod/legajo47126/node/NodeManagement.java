@@ -57,6 +57,10 @@ public class NodeManagement {
 	// load of every known node
 	private static NodeKnownAgentsLoad nodeKnownAgentsLoad;	// TODO should go in SimulationCommunicationImpl...
 	
+	public NodeManagement() {
+		// TODO Auto-generated constructor stub
+	}
+	
 	public static void main(String[] args) {
 		// set the basic configuration for the logger, so everything goes to stdout
 		BasicConfigurator.configure();	//TODO set a propper configuration file for the logger
@@ -74,9 +78,7 @@ public class NodeManagement {
 		
 		// create the local node
 		try {
-			if(args.length == 2)
-				localNode = new Node(args[0], Integer.valueOf(args[1]));
-			else if(args.length == 1)
+			if(args.length == 1)
 				localNode = new Node(args[0]);
 			else
 				localNode = new Node();
