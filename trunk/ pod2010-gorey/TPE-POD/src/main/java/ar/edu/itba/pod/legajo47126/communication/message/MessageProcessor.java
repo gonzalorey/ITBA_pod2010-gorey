@@ -10,6 +10,7 @@ import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.payload.DisconnectPayload;
 import ar.edu.itba.pod.simul.communication.payload.NodeAgentLoadPayload;
+import ar.edu.itba.pod.simul.communication.payload.NodeMarketDataPayload;
 import ar.edu.itba.pod.simul.communication.payload.ResourceRequestPayload;
 import ar.edu.itba.pod.simul.communication.payload.ResourceTransferMessagePayload;
 
@@ -150,13 +151,11 @@ public class MessageProcessor implements Runnable {
 	}
 	
 	private void doNewMessageRequest(MessageContainer messageContainer) {
-		// TODO Auto-generated method stub
-		
+		// DO NOTHING
 	}
 	
 	private void doNewMessageResponse(MessageContainer messageContainer) {
-		// TODO Auto-generated method stub
-		
+		// DO NOTHING
 	}
 	
 	private void doNodeAgentsLoad(MessageContainer messageContainer) {
@@ -189,13 +188,19 @@ public class MessageProcessor implements Runnable {
 	}
 	
 	private void doNodeMarketData(MessageContainer messageContainer) {
-		// TODO Auto-generated method stub
-		
+		NodeMarketDataPayload payload = (NodeMarketDataPayload) messageContainer.getMessage().getPayload();
+		// TODO add the statistics...
 	}
 	
 	private void doNodeMarketDataRequest(MessageContainer messageContainer) {
-		// TODO Auto-generated method stub
-		
+		try {
+			logger.debug("Sending a NODE_MARKET_DATA message...");
+			Message message = MessageFactory.NodeMarketDataMessage();
+			ConnectionManagerImpl.getInstance().getGroupCommunication().send(message, messageContainer.getMessage().getNodeId());
+		} catch (RemoteException e) {
+			logger.error("The message couldn't be sent");
+			logger.error("Error message: " + e.getMessage());
+		}
 	}
 	
 	private void doResourceRequest(MessageContainer messageContainer) {

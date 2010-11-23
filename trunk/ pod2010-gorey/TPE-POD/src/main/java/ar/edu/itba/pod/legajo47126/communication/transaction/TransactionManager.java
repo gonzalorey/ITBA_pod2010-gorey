@@ -283,7 +283,10 @@ public class TransactionManager implements Transactionable {
 	private void onTimeout() throws RemoteException {
 		logger.debug("OnTimeout executed, processing according to the current state");
 
-		// TODO do something...
+		if(!transaction.isTransactionDone()){
+			logger.warn("The transaction couldn't be finished, rollback");
+			rollback();
+		}
 	}
 
 	private class ScheduleTask extends TimerTask {
