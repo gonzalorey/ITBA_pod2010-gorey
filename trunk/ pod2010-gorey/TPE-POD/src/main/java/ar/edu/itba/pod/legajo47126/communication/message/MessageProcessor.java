@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
+import ar.edu.itba.pod.legajo47126.simul.SimulationCommunicationImpl;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.payload.DisconnectPayload;
 import ar.edu.itba.pod.simul.communication.payload.NodeAgentLoadPayload;
@@ -164,7 +165,13 @@ public class MessageProcessor implements Runnable {
 	private void doNodeAgentsLoad(MessageContainer messageContainer) {
 		// obtaining the payload and adding the load to the node agents load map
 		NodeAgentLoadPayload payload = (NodeAgentLoadPayload) messageContainer.getMessage().getPayload();
-		nodeManagement.getNodeKnownAgentsLoad().setNodeLoad(messageContainer.getMessage().getNodeId(), payload.getLoad());
+		try {
+			((SimulationCommunicationImpl) nodeManagement.getConnectionManager().getSimulationCommunication()).
+				getNodeKnownAgentsLoad().setNodeLoad(messageContainer.getMessage().getNodeId(), payload.getLoad());
+		} catch (RemoteException e) {
+			logger.error("There was an error while trying to get the node known agents load");
+			logger.error("Error message: " + e.getMessage());
+		}
 		logger.debug("Node [" + messageContainer.getMessage().getNodeId() + "] and load [" + payload.getLoad() + "] added to the local map");
 	}
 

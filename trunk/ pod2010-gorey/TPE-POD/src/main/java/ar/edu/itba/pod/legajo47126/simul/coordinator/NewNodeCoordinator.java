@@ -6,7 +6,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
+import ar.edu.itba.pod.legajo47126.node.NodeKnownAgentsLoad;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
+import ar.edu.itba.pod.legajo47126.simul.SimulationCommunicationImpl;
 import ar.edu.itba.pod.simul.communication.AgentDescriptor;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.NodeAgentLoad;
@@ -36,8 +38,17 @@ public class NewNodeCoordinator implements Runnable{
 	@Override
 	public void run() {
 
-		// reset the node agents load
-		nodeManagement.getNodeKnownAgentsLoad().reset();
+		// get the node agents load
+		NodeKnownAgentsLoad nodeKnownAgentsLoad;
+		try {
+			nodeKnownAgentsLoad = ((SimulationCommunicationImpl) nodeManagement.getConnectionManager().
+					getSimulationCommunication()).getNodeKnownAgentsLoad();
+		} catch (RemoteException e) {
+			logger.error("There was an error while trying to get the node known agents load");
+			logger.error("Error message: " + e.getMessage());
+			return;
+		}
+		nodeKnownAgentsLoad.reset();
 		
 		// broadcast a message saying that the local node is the new coordinator
 		logger.debug("Start coordinating, inform all the others");
@@ -61,22 +72,22 @@ public class NewNodeCoordinator implements Runnable{
 		logger.debug("Waiting time ended, redistributing the node agents load...");
 		
 		// added the local node load to the list
-		nodeManagement.getNodeKnownAgentsLoad().setNodeLoad(nodeManagement.getLocalNode().getNodeId(), 
+		nodeKnownAgentsLoad.setNodeLoad(nodeManagement.getLocalNode().getNodeId(), 
 				nodeManagement.getSimulationManager().getAgentsLoad());
 		
-		if(nodeManagement.getNodeKnownAgentsLoad().getTotalLoad() == 0 || 
-				nodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size() == 0){
+		if(nodeKnownAgentsLoad.getTotalLoad() == 0 || 
+				nodeKnownAgentsLoad.getNodesLoad().size() == 0){
 			logger.debug("No nodes to distribute the load, coordination ended");
 			return;
 		}
 		
-		int loadPerNode = nodeManagement.getNodeKnownAgentsLoad().getTotalLoad() 
-			/ nodeManagement.getNodeKnownAgentsLoad().getNodesLoad().size();
+		int loadPerNode = nodeKnownAgentsLoad.getTotalLoad() 
+			/ nodeKnownAgentsLoad.getNodesLoad().size();
 	
 		ConcurrentLinkedQueue<AgentDescriptor> remainingAgents = new ConcurrentLinkedQueue<AgentDescriptor>();
 		ConcurrentLinkedQueue<NodeAgentLoad> lowOnAgentsNodes = new ConcurrentLinkedQueue<NodeAgentLoad>();
 
-		for(NodeAgentLoad nodeAgentLoad : nodeManagement.getNodeKnownAgentsLoad().getNodesLoad()){
+		for(NodeAgentLoad nodeAgentLoad : nodeKnownAgentsLoad.getNodesLoad()){
 			int numberOfNodeRemainingAgents = nodeAgentLoad.getNumberOfAgents() - loadPerNode;
 			
 			if(numberOfNodeRemainingAgents > 0){

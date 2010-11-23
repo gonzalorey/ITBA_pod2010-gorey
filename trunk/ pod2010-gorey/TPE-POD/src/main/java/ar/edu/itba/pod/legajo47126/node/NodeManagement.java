@@ -29,17 +29,14 @@ public class NodeManagement {
 	// configuration file with the loaded properties
 	private ConfigFile configFile;
 	
-	// instance of the connection manager
+	// instance of the Connection Manager
 	private ConnectionManager connectionManager;
 	
-	// instance of the market manager
+	// instance of the Market Manager
 	private MarketManager marketManager;
 	
-	// instance of the simulation manager
+	// instance of the Simulation Manager
 	private SimulationManager simulationManager;
-	
-	// load of every known node
-	private NodeKnownAgentsLoad nodeKnownAgentsLoad;	// TODO should go in SimulationCommunicationImpl...
 	
 	public NodeManagement(String[] args) throws UnknownHostException, IOException, RemoteException {
 		
@@ -53,11 +50,9 @@ public class NodeManagement {
 		String configFileName = "node.conf";
 		configFile = new ConfigFile(configFileName);
 		
-		logger.info("Starting the Market Manager...");
 		marketManager = new MarketManagerImpl(this);
 		marketManager = new FeedbackMarketManager(new ConsoleFeedbackCallback(), marketManager);
 		marketManager.start();
-		logger.info("Market Manager started");
 		
 		// obtain the reference to the market
 		Market market = marketManager.market();
@@ -69,13 +64,10 @@ public class NodeManagement {
 		// register the market in the simulation
 		simulationManager.register(Market.class, market);
 		
-		// instance the node agents load
-		nodeKnownAgentsLoad = new NodeKnownAgentsLoad();
-		
 		// create the connection manager
 		connectionManager = new ConnectionManagerImpl(this);
 		logger.info("Connection Manager initialized successfully");
-				
+		
 	}
 	
 	public static void main(String[] args) {
@@ -135,8 +127,4 @@ public class NodeManagement {
 		return (SimulationManagerImpl)simulationManager;
 	}
 
-	public NodeKnownAgentsLoad getNodeKnownAgentsLoad(){
-		return nodeKnownAgentsLoad;
-	}
-	
 }
