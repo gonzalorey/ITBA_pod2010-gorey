@@ -93,4 +93,8 @@ public class SimulationManagerImpl implements SimulationManager {
 	public ConcurrentLinkedQueue<Agent> getAgentsLoadQueue(){
 		return distributedSimulation.getAgentsLoadQueue();
 	}
+	
+	public boolean isStarted(){
+		return started;
+	}
 }

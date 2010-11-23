@@ -58,9 +58,6 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 	public void broadcast(Message message) throws RemoteException {
 		logger.debug("Broadcasting message [" + message + "]");
 		
-		if(nodeManagement.getConnectionManager().getClusterAdmimnistration().getGroupId() == null)
-			throw new IllegalStateException("A broadcast message was ");
-		
 		// instance the gossip probability with the maximum
 		double gossipProbability = 1;
 		logger.debug("Start broadcasting with a gossip probability of " + gossipProbability);
@@ -165,7 +162,7 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		long messageExpirationTime = nodeManagement.getConfigFile().getProperty("MessageExpirationTime", DEFAULT_MESSAGE_EXPIRATION_TIME);
 		
 		// start the message depurator to empty the list of broadcasted messages after their timestamp has expired  
-		MessageDepurator messageDepurator = new MessageDepurator(broadcastedMessagesQueue, messageExpirationTime);
+		MessageDepurator messageDepurator = new MessageDepurator(nodeManagement, broadcastedMessagesQueue, messageExpirationTime);
 		new Thread(messageDepurator).start();
 		
 		// start the message processor to process the arriving messages

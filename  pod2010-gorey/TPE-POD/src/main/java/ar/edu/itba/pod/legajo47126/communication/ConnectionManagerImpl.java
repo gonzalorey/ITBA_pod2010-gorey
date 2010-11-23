@@ -15,6 +15,7 @@ import org.apache.log4j.Logger;
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
 import ar.edu.itba.pod.legajo47126.communication.message.MessageManager;
 import ar.edu.itba.pod.legajo47126.communication.transaction.TransactionManager;
+import ar.edu.itba.pod.legajo47126.exceptions.NoConnectionAvailableException;
 import ar.edu.itba.pod.legajo47126.exceptions.WrongNodeIDException;
 import ar.edu.itba.pod.legajo47126.node.Node;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
@@ -109,12 +110,14 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		}
 		
 		try {
-			connectingNode = new Node(nodeId);
+			connectingNode = new Node(nodeId, nodeManagement);
 		} catch (UnknownHostException e) {
 			logger.error("Wrong node ID");
 			logger.error("Error message:" + e.getMessage());
 			throw new WrongNodeIDException();
 		}
+		
+		// TODO see where to set the disconnection of the node
 		
 		// connect to the registry of the target node
 		Registry registry = LocateRegistry.getRegistry(nodeId);
@@ -123,31 +126,37 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		// set the obtained registry as the connecting node one
 		connectingNode.setRegistry(registry);
 		
-		// obtain the reference to his ConnectionManager
-		try {
-			logger.debug("Obtaining the Connection Manager...");
-			ConnectionManager connectionManager = (ConnectionManager) registry.lookup(CONNECTION_MANAGER_NAME);
-			logger.debug("Connection Manager obtained successfully");
+		try{
+			// obtain the reference to his ConnectionManager
+			try {
+				logger.debug("Obtaining the Connection Manager...");
+				ConnectionManager connectionManager = (ConnectionManager) registry.lookup(CONNECTION_MANAGER_NAME);
+				logger.debug("Connection Manager obtained successfully");
+
+				// set the obtained Connection Manager as the connecting node one
+				connectingNode.setConnectionManager(connectionManager);
+
+				// add the connecting node to the kown nodes list
+				knownNodes.put(connectingNode.getNodeId(), connectingNode);
+				logger.debug("Node added to the list of known nodes");
+
+				return connectionManager;
+			} catch (NotBoundException e) {
+				logger.error("Remote reference not bounded to the name [" + CONNECTION_MANAGER_NAME + "]");
+				logger.error("Error message: " + e.getMessage());
+				throw new NoConnectionAvailableException();
+			} catch (Exception e) {
+				logger.error("There was an error and the remote Connection Manager coudn't be found");
+				logger.debug("Error message:" + e.getMessage());
+				throw new NoConnectionAvailableException();
+			}
+		} catch (NoConnectionAvailableException e) {
+			logger.debug("Disconnecting the node [" + nodeId + "]");
 			
-			// set the obtained Connection Manager as the connecting node one
-			connectingNode.setConnectionManager(connectionManager);
+			getClusterAdmimnistration().disconnectFromGroup(nodeId);
 			
-			// add the connecting node to the kown nodes list
-			knownNodes.put(connectingNode.getNodeId(), connectingNode);
-			logger.debug("Node added to the list of known nodes");
-			
-			return connectionManager;
-		} catch (NotBoundException e) {
-			logger.error("Remote reference not bounded to the name [" + CONNECTION_MANAGER_NAME + "]");
-			e.printStackTrace();
-			//TODO make NoConnectionAvailableException();
-			//throw new NoConnectionAvailableException();
-			throw new RemoteException();
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("There was an error and the remote Connection Manager coudn't be found");
-			logger.debug("Error message:" + e.getMessage());
-			throw new RemoteException();
+			throw new NoConnectionAvailableException("There was an error with the node connection and he " +
+					"was disconnected from the group");
 		}
 	}
 	

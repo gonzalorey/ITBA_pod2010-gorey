@@ -2,7 +2,7 @@ package ar.edu.itba.pod.legajo47126.communication.message;
 
 import java.rmi.RemoteException;
 import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.log4j.Logger;
 
@@ -33,9 +33,9 @@ public class MessageRequester implements Runnable{
 	public void run() {
 		logger.debug("MessageRequester started");
 		
-		while(true){
+		while(!nodeManagement.shouldExit()){
 			try {
-				CopyOnWriteArrayList<String> groupNodes = ((ClusterAdministrationImpl)nodeManagement.
+				CopyOnWriteArraySet<String> groupNodes = ((ClusterAdministrationImpl)nodeManagement.
 						getConnectionManager().getClusterAdmimnistration()).getGroupNodes();
 				
 				// instance the gossip probability with the maximum

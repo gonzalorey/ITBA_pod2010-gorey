@@ -4,6 +4,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
@@ -22,7 +23,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 	private String groupId = null; 
 	
 	// collection with the nodes that belong to the group 
-	private CopyOnWriteArrayList<String> groupNodes = null;
+	private CopyOnWriteArraySet<String> groupNodes = null;
 	
 	private NodeManagement nodeManagement;
 	
@@ -38,7 +39,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		this.nodeManagement = nodeManagement;
 		
 		// instantiate the list of group nodes with a concurrent array list
-		groupNodes = new CopyOnWriteArrayList<String>();
+		groupNodes = new CopyOnWriteArraySet<String>();
 	}
 	
 	@Override
@@ -106,7 +107,6 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 			groupId = null;
 			logger.error("There was an error during the addition of the local node");  
 			logger.error("Error message:" + e.getMessage());
-			e.printStackTrace();
 			
 			throw new RemoteException();
 		}
@@ -164,13 +164,13 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		logger.debug("Node removed from groupNodes and knownNodes lists");
 	}
 	
-	private CopyOnWriteArrayList<String> getRandomNodes(CopyOnWriteArrayList<String> nodes){
+	private CopyOnWriteArrayList<String> getRandomNodes(CopyOnWriteArraySet<String> groupNodes2){
 		CopyOnWriteArrayList<String> randomGroupNodes = new CopyOnWriteArrayList<String>();
 		
 		Random rand = new Random();
 		double comparator = rand.nextDouble();
 		
-		for(String nodeId : nodes){
+		for(String nodeId : groupNodes2){
 			if(rand.nextDouble() < comparator)
 				randomGroupNodes.add(nodeId);
 		}
@@ -178,7 +178,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		return randomGroupNodes;
 	}
 	
-	public CopyOnWriteArrayList<String> getGroupNodes(){
+	public CopyOnWriteArraySet<String> getGroupNodes(){
 		return groupNodes;
 	}
 	

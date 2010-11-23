@@ -5,6 +5,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
+import ar.edu.itba.pod.legajo47126.node.NodeManagement;
+
 public class MessageDepurator implements Runnable {
 	
 	// instance of the log4j logger
@@ -16,7 +18,10 @@ public class MessageDepurator implements Runnable {
 	// time that informs when the expiration time was reached 
 	private long messageExpirationTime;
 	
-	public MessageDepurator(LinkedBlockingQueue<MessageContainer> broadcastedMessagesQueue, long messageExpirationTime){
+	private NodeManagement nodeManagement;
+	
+	public MessageDepurator(NodeManagement nodeManagement, LinkedBlockingQueue<MessageContainer> broadcastedMessagesQueue, long messageExpirationTime){
+		this.nodeManagement = nodeManagement;
 		this.broadcastedMessagesQueue = broadcastedMessagesQueue;
 		this.messageExpirationTime = messageExpirationTime;
 	}
@@ -26,7 +31,7 @@ public class MessageDepurator implements Runnable {
 		// instantiate the datetime object
 		DateTime dateTime = new DateTime();
 		
-		while(true){
+		while(!nodeManagement.shouldExit()){
 			// peek the first message of the queue
 			MessageContainer messageContainer = broadcastedMessagesQueue.peek();
 			

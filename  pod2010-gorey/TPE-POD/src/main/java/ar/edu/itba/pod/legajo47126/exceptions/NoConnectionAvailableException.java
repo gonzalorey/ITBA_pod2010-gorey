@@ -4,6 +4,14 @@ import java.rmi.RemoteException;
 
 public class NoConnectionAvailableException extends RemoteException{
 
+	public NoConnectionAvailableException(String string) {
+		super(string);
+	}
+	
+	public NoConnectionAvailableException() {
+		super();
+	}
+
 	/**
 	 * default serial version ID
 	 */
