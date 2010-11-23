@@ -1,11 +1,11 @@
-package ar.edu.itba.pod.legajo47126.communication.impl.message;
+package ar.edu.itba.pod.legajo47126.communication.message;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.payload.DisconnectPayload;

@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.communication.impl.message;
+package ar.edu.itba.pod.legajo47126.communication.message;
 
 import java.util.concurrent.LinkedBlockingQueue;
 

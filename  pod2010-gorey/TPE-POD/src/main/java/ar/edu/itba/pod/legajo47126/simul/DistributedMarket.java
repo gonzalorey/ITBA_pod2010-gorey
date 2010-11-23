@@ -4,8 +4,8 @@ import java.rmi.RemoteException;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.impl.ConnectionManagerImpl;
-import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageFactory;
+import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.local.LocalMarket;

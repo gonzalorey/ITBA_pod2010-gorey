@@ -2,7 +2,7 @@ package ar.edu.itba.pod.legajo47126.communication.transaction;
 
 import org.joda.time.DateTime;
 
-import ar.edu.itba.pod.legajo47126.communication.paylod.impl.ResourceTransferMessagePayloadImpl;
+import ar.edu.itba.pod.legajo47126.communication.paylod.ResourceTransferMessagePayloadImpl;
 import ar.edu.itba.pod.simul.communication.payload.Payload;
 import ar.edu.itba.pod.simul.market.Resource;
 

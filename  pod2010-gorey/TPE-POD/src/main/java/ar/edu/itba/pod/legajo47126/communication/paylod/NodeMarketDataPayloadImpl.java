@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.communication.paylod.impl;
+package ar.edu.itba.pod.legajo47126.communication.paylod;
 
 import ar.edu.itba.pod.simul.communication.MarketData;
 import ar.edu.itba.pod.simul.communication.payload.NodeMarketDataPayload;

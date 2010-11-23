@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.legajo47126.communication.impl;
+package ar.edu.itba.pod.legajo47126.communication;
 
 import java.net.UnknownHostException;
 import java.rmi.AccessException;
@@ -12,8 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.impl.message.MessageManager;
 import ar.edu.itba.pod.legajo47126.communication.interfaces.RegistryPort;
+import ar.edu.itba.pod.legajo47126.communication.message.MessageManager;
 import ar.edu.itba.pod.legajo47126.communication.transaction.TransactionManager;
 import ar.edu.itba.pod.legajo47126.exceptions.WrongNodeIDException;
 import ar.edu.itba.pod.legajo47126.node.Node;
