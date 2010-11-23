@@ -44,8 +44,10 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 	
 	@Override
 	public void connectToGroup(String entryPointId) throws ConnectException {
+		logger.debug("Connecting to group through entry point [" + entryPointId + "]...");
+		
 		Preconditions.checkNotNull(entryPointId, "Null String received");
-		Preconditions.checkState(entryPointId.equals(""), "Empty String received");
+		Preconditions.checkState(!entryPointId.equals(""), "Empty String received");
 
 		try {
 			nodeManagement.getConnectionManager().getClusterAdmimnistration().connectToGroup(entryPointId);
@@ -59,6 +61,7 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 
 	@Override
 	public void createGroup() throws ConnectException {
+		logger.debug("Creating a group...");
 		try {
 			nodeManagement.getConnectionManager().getClusterAdmimnistration().createGroup();
 		} catch (RemoteException e) {
@@ -71,6 +74,7 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 
 	@Override
 	public void disconnect() {
+		logger.debug("Disconnecting from group...");
 		try{
 			new DisconnectionCoordinator(nodeManagement).run();
 			
@@ -93,16 +97,19 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 
 	@Override
 	public ConnectionManager getConnectionManager() {
+		logger.debug("Getting the connection manager...");
 		return nodeManagement.getConnectionManager();
 	}
 
 	@Override
 	public MarketManager getMarketManager() {
+		logger.debug("Getting the market manager...");
 		return nodeManagement.getMarketManager();
 	}
 
 	@Override
 	public SimulationManager getSimulationManager() {
+		logger.debug("Getting the simulation manager...");
 		return nodeManagement.getSimulationManager();
 	}
 

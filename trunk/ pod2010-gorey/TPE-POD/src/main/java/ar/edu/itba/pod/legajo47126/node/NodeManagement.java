@@ -1,11 +1,12 @@
 package ar.edu.itba.pod.legajo47126.node;
 
 import java.io.IOException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 
-import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
@@ -15,8 +16,6 @@ import ar.edu.itba.pod.simul.communication.ConnectionManager;
 import ar.edu.itba.pod.simul.market.Market;
 import ar.edu.itba.pod.simul.market.MarketManager;
 import ar.edu.itba.pod.simul.simulation.SimulationManager;
-import ar.edu.itba.pod.simul.ui.ConsoleFeedbackCallback;
-import ar.edu.itba.pod.simul.ui.FeedbackMarketManager;
 
 public class NodeManagement {
 	
@@ -38,12 +37,14 @@ public class NodeManagement {
 	// instance of the Simulation Manager
 	private SimulationManager simulationManager;
 	
+	private boolean shouldExit;
+	
 	public NodeManagement(String[] args) throws UnknownHostException, IOException, RemoteException {
 		
 		if(args.length == 1)
-			localNode = new Node(args[0]);
+			localNode = new Node(args[0], this);
 		else
-			localNode = new Node();
+			localNode = new Node(this);
 		logger.info("Node '" + localNode + "' started successfully");
 
 		// configuration class to get the properties from the config file
@@ -51,7 +52,7 @@ public class NodeManagement {
 		configFile = new ConfigFile(configFileName);
 		
 		marketManager = new MarketManagerImpl(this);
-		marketManager = new FeedbackMarketManager(new ConsoleFeedbackCallback(), marketManager);
+//		marketManager = new FeedbackMarketManager(new ConsoleFeedbackCallback(), marketManager);
 		marketManager.start();
 		
 		// obtain the reference to the market
@@ -68,12 +69,16 @@ public class NodeManagement {
 		connectionManager = new ConnectionManagerImpl(this);
 		logger.info("Connection Manager initialized successfully");
 		
+		shouldExit = false;
 	}
 	
 	public static void main(String[] args) {
 		
 		// set the basic configuration for the logger, so everything goes to stdout
-		BasicConfigurator.configure();	//TODO set a propper configuration file for the logger
+//		BasicConfigurator.configure();
+		
+		URL uri = NodeManagement.class.getResource("log4j.config");
+		PropertyConfigurator.configure(uri);
 		
 		// create the Node Management
 		try {
@@ -127,4 +132,11 @@ public class NodeManagement {
 		return (SimulationManagerImpl)simulationManager;
 	}
 
+	public boolean shouldExit() {
+		return shouldExit;
+	}
+
+	public void setShouldExit(boolean state) {
+		shouldExit = state;
+	}
 }

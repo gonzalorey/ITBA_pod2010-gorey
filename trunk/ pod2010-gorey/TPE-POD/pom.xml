@@ -51,6 +51,7 @@
 					<archive>
 						<manifest>
 							<mainClass>ar.edu.itba.pod.legajo47126.node.NodeManagement</mainClass>
+							<!-- <mainClass>ar.edu.itba.pod.legajo47126.simul.ObjectFactoryAlternativeMain</mainClass> -->
 						</manifest>
 					</archive>
 				</configuration>

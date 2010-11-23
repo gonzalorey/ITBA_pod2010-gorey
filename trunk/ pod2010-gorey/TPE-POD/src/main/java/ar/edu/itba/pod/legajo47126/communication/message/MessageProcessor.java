@@ -5,9 +5,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.legajo47126.simulation.SimulationCommunicationImpl;
+import ar.edu.itba.pod.legajo47126.simulation.Statistics;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.payload.DisconnectPayload;
 import ar.edu.itba.pod.simul.communication.payload.NodeAgentLoadPayload;
@@ -36,7 +36,7 @@ public class MessageProcessor implements Runnable {
 	
 	@Override
 	public void run() {
-		while(true){
+		while(!nodeManagement.shouldExit()){
 			MessageContainer messageContainer = null;
 			try {
 				// peek the first message of the queue
@@ -200,7 +200,7 @@ public class MessageProcessor implements Runnable {
 	
 	private void doNodeMarketData(MessageContainer messageContainer) {
 		NodeMarketDataPayload payload = (NodeMarketDataPayload) messageContainer.getMessage().getPayload();
-		// TODO add the statistics...
+		Statistics.setStatistics(messageContainer.getMessage().getNodeId(), payload.getMarketData().getHistory());
 	}
 	
 	private void doNodeMarketDataRequest(MessageContainer messageContainer) {

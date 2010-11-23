@@ -299,9 +299,10 @@ public class NodeConsole {
 					helpFormatter.printHelp("-command_name [args]", options);
 				} else if(cmd.hasOption(exit.getOpt())){
 					logger.info("Exiting...");
-					nodeManagement.getSimulationManager().shutdown();
+					if(nodeManagement.getSimulationManager().isStarted())
+						nodeManagement.getSimulationManager().shutdown();
 					nodeManagement.getMarketManager().shutdown();
-					// TODO finish the other threads
+					nodeManagement.setShouldExit(true);
 					break;
 				} else{
 					logger.info("Wrong command, type -help for more information");

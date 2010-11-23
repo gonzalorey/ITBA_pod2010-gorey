@@ -12,8 +12,8 @@ public class ObjectFactoryAlternativeMain2 {
 		try {
 			ObjectFactoryAlternative obj = new ObjectFactoryAlternativeImpl(args);
 			obj.getMarketManager().start();
+			obj.connectToGroup("192.168.0.104");
 			obj.getSimulationManager().start();
-			obj.connectToGroup("192.168.0.101");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

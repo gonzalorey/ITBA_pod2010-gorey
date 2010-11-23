@@ -12,8 +12,8 @@ public class ObjectFactoryAlternativeMain {
 		try {
 			ObjectFactoryAlternative obj = new ObjectFactoryAlternativeImpl(args);
 			obj.getMarketManager().start();
-			obj.getSimulationManager().start();
 			obj.createGroup();
+			obj.getSimulationManager().start();
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
