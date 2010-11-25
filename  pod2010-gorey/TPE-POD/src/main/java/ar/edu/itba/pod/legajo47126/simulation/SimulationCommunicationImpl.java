@@ -38,7 +38,7 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 	public void startAgent(AgentDescriptor descriptor) throws RemoteException {
 		logger.debug("Starting agent [" +  descriptor + "]...");
 		
-		nodeManagement.getSimulationManager().addAgent(descriptor.build());
+		((SimulationManagerImpl) nodeManagement.getSimulationManager()).addAgentToLocalSimulation(descriptor.build());
 		logger.debug("Agent [" + descriptor + "] added to the node simulation");
 	}
 

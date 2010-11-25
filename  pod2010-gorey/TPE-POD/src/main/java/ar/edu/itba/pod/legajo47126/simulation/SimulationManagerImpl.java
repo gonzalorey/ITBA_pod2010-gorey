@@ -56,7 +56,7 @@ public class SimulationManagerImpl implements SimulationManager {
 	@Override
 	public void addAgent(Agent agent) {
 		logger.info("Adding agent...");
-		distributedSimulation.addAgent(agent);
+//		distributedSimulation.addAgent(agent);
 		
 		// launch a new node coordinator to balance the node agents
 		Thread thread = new Thread(new NewAgentCoordinator(nodeManagement, agent));
@@ -89,6 +89,11 @@ public class SimulationManagerImpl implements SimulationManager {
 	@Override
 	public Collection<Agent> getAgents() {
 		return distributedSimulation.getAgents();
+	}
+	
+	public void addAgentToLocalSimulation(Agent agent) {
+		logger.info("Adding agent to the local simulation...");
+		distributedSimulation.addAgent(agent);
 	}
 	
 	public int getAgentsLoad() {
