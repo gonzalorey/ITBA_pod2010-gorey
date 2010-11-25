@@ -160,7 +160,7 @@ public class ClusterAdministrationImpl implements ClusterAdministration, Registr
 		
 		// remove the node from the group and the known nodes list 
 		groupNodes.remove(nodeId);
-		nodeManagement.getConnectionManager().getKnownNodes().remove(nodeId);
+		((ConnectionManagerImpl) nodeManagement.getConnectionManager()).getKnownNodes().remove(nodeId);
 		logger.debug("Node removed from groupNodes and knownNodes lists");
 	}
 	

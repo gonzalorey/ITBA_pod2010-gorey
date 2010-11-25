@@ -69,7 +69,7 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 		
 		Collection<AgentDescriptor> migratingAgents = new CopyOnWriteArrayList<AgentDescriptor>();
 		for(int i = 0; i < numberOfAgents; i++){
-			Agent agent = nodeManagement.getSimulationManager().getAgentsLoadQueue().remove();
+			Agent agent = ((SimulationManagerImpl) nodeManagement.getSimulationManager()).getAgentsLoadQueue().remove();
 			migratingAgents.add(agent.getAgentDescriptor());
 			logger.debug("Agent [" + agent + "] removed from the node simulation");
 		}

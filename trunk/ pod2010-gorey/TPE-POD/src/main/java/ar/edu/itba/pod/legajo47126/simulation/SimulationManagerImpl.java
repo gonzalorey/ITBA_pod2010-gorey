@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
+import ar.edu.itba.pod.legajo47126.simul.coordinator.NewAgentCoordinator;
 import ar.edu.itba.pod.simul.simulation.Agent;
 import ar.edu.itba.pod.simul.simulation.SimulationInspector;
 import ar.edu.itba.pod.simul.simulation.SimulationManager;
@@ -56,6 +57,10 @@ public class SimulationManagerImpl implements SimulationManager {
 	public void addAgent(Agent agent) {
 		logger.info("Adding agent...");
 		distributedSimulation.addAgent(agent);
+		
+		// launch a new node coordinator to balance the node agents
+		Thread thread = new Thread(new NewAgentCoordinator(nodeManagement, agent));
+		thread.start();
 	}
 	
 	@Override

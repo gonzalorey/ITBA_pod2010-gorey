@@ -1,12 +1,11 @@
 package ar.edu.itba.pod.legajo47126.node;
 
 import java.io.IOException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 
 import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
@@ -16,6 +15,8 @@ import ar.edu.itba.pod.simul.communication.ConnectionManager;
 import ar.edu.itba.pod.simul.market.Market;
 import ar.edu.itba.pod.simul.market.MarketManager;
 import ar.edu.itba.pod.simul.simulation.SimulationManager;
+import ar.edu.itba.pod.simul.ui.ConsoleFeedbackCallback;
+import ar.edu.itba.pod.simul.ui.FeedbackMarketManager;
 
 public class NodeManagement {
 	
@@ -51,8 +52,11 @@ public class NodeManagement {
 		String configFileName = "node.conf";
 		configFile = new ConfigFile(configFileName);
 		
+//		URL uri = NodeManagement.class.getResource("node.conf");
+//		configFile = new ConfigFile(uri.getPath());
+		
 		marketManager = new MarketManagerImpl(this);
-//		marketManager = new FeedbackMarketManager(new ConsoleFeedbackCallback(), marketManager);
+		marketManager = new FeedbackMarketManager(new ConsoleFeedbackCallback(), marketManager);
 		marketManager.start();
 		
 		// obtain the reference to the market
@@ -75,32 +79,32 @@ public class NodeManagement {
 	public static void main(String[] args) {
 		
 		// set the basic configuration for the logger, so everything goes to stdout
-//		BasicConfigurator.configure();
+		BasicConfigurator.configure();
 		
-		URL uri = NodeManagement.class.getResource("log4j.config");
-		PropertyConfigurator.configure(uri);
+//		URL uri = NodeManagement.class.getResource("log4j.config");
+//		PropertyConfigurator.configure(uri);
 		
 		// create the Node Management
 		try {
 			NodeManagement nodeManagement = new NodeManagement(args);
 			
 			// creaate and run the console
-			new NodeConsole(nodeManagement).runConsole();
+			new NodeConsole().runConsole(nodeManagement);
 			
 		} catch (UnknownHostException e) {
 			logger.fatal("The local node couldn't be started. Aborting execution");
-			logger.fatal("Error message:" + e.getMessage());
+			logger.fatal("Error message:" + e.getMessage(), e);
 			return;
 		} catch (RemoteException e) {
 			logger.fatal("There was an error during the Connection Manager initialization. Aborting execution");
-			logger.fatal("Error message:" + e.getMessage());
+			logger.fatal("Error message:" + e.getMessage(), e);
 			return;
 		} catch (IOException e) {
-			logger.error("'node.conf' file not found. Using default configurations");
-            logger.error("Error message:" + e.getMessage());
+			logger.error("'node.conf' file not found. Using default configurations", e);
+            logger.error("Error message:" + e.getMessage(), e);
 		} catch (Exception e) {
 			logger.error("An unexpected exception ocurred");
-            logger.error("Error message:" + e.getMessage());
+            logger.error("Error message:" + e.getMessage(), e);
 		}
 
 		logger.info("Bye!");
@@ -120,16 +124,16 @@ public class NodeManagement {
 		return configFile;
 	}
 	
-	public ConnectionManagerImpl getConnectionManager(){
-		return (ConnectionManagerImpl) connectionManager;
+	public ConnectionManager getConnectionManager(){
+		return connectionManager;
 	}
 	
-	public MarketManagerImpl getMarketManager() {
-		return (MarketManagerImpl)marketManager;
+	public MarketManager getMarketManager() {
+		return marketManager;
 	}
 	
-	public SimulationManagerImpl getSimulationManager(){
-		return (SimulationManagerImpl)simulationManager;
+	public SimulationManager getSimulationManager(){
+		return simulationManager;
 	}
 
 	public boolean shouldExit() {

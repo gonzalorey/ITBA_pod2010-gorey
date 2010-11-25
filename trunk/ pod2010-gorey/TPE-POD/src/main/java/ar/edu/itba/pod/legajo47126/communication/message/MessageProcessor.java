@@ -5,8 +5,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
+import ar.edu.itba.pod.legajo47126.market.DistributedMarket;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.legajo47126.simulation.SimulationCommunicationImpl;
+import ar.edu.itba.pod.legajo47126.simulation.SimulationManagerImpl;
 import ar.edu.itba.pod.legajo47126.simulation.Statistics;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.payload.DisconnectPayload;
@@ -187,7 +189,7 @@ public class MessageProcessor implements Runnable {
 		
 		logger.debug("Sending a NODE_AGENTS_LOAD message...");
 		Message loadMessage = MessageFactory.NodeAgentLoadMessage(nodeManagement.getLocalNode().getNodeId(), 
-				nodeManagement.getSimulationManager().getAgentsLoad());
+				((SimulationManagerImpl) nodeManagement.getSimulationManager()).getAgentsLoad());
 		try {
 			// sending the message
 			nodeManagement.getConnectionManager().getGroupCommunication().send(loadMessage, messageContainer.getMessage().getNodeId());
@@ -258,14 +260,14 @@ public class MessageProcessor implements Runnable {
 			// it was me the destination node, I should add the resources
 			logger.info("Adding to the market an amount of [" + payload.getAmount() + "] of resource [" 
 					+ payload.getResource() + "]...");
-			nodeManagement.getMarketManager().market().addToRemoteSelling(payload.getResource(), payload.getAmount());
+			((DistributedMarket) nodeManagement.getMarketManager().market()).addToRemotelySelling(payload.getResource(), payload.getAmount());
 			logger.debug("Resources added successfully");
 			
 		} else {
 			// it wasn't me the destination, so I should remove the resources
 			logger.info("Removing from the market an amount of [" + payload.getAmount() + "] of resource [" 
 					+ payload.getResource() + "]...");
-			nodeManagement.getMarketManager().market().removeFromSelling(payload.getResource(), payload.getAmount());
+			((DistributedMarket) nodeManagement.getMarketManager().market()).removeFromSelling(payload.getResource(), payload.getAmount());
 			logger.debug("Resources removed successfully");
 		}
 	}
