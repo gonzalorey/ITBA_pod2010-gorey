@@ -8,6 +8,7 @@ import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.legajo47126.simulation.NodeKnownAgentsLoad;
 import ar.edu.itba.pod.legajo47126.simulation.SimulationCommunicationImpl;
+import ar.edu.itba.pod.legajo47126.simulation.SimulationManagerImpl;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.NodeAgentLoad;
 import ar.edu.itba.pod.simul.simulation.Agent;
@@ -68,7 +69,7 @@ public class NewAgentCoordinator implements Runnable{
 		
 		// added the local node load to the list
 		nodeKnownAgentsLoad.setNodeLoad(nodeManagement.getLocalNode().getNodeId(), 
-				nodeManagement.getSimulationManager().getAgentsLoad());
+				((SimulationManagerImpl) nodeManagement.getSimulationManager()).getAgentsLoad());
 		
 		NodeAgentLoad nodeAgentLoad;
 		try {

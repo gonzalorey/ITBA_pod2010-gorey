@@ -88,7 +88,11 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		}
 		
 		// add the message to the broadcasted messages queue
-		broadcastedMessagesQueue.add(new MessageContainer(message));
+		try{
+			broadcastedMessagesQueue.add(new MessageContainer(message));
+		} catch (Exception e) {
+			logger.info("Queue full. Error message: " +  e.getMessage());
+		}
 		logger.debug("Message added to the broadcasted messages queue");
 		
 		logger.debug("Broadcasting ended");
