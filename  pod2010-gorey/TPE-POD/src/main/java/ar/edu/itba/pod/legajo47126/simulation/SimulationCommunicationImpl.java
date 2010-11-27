@@ -59,8 +59,7 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 	
 	@Override
 	public void nodeLoadModified(NodeAgentLoad newLoad) throws RemoteException {
-		// Gustavo a Xin: Lo deberías usar si es que estas usando bully y un único coordinador... 
-		// caso estes usando la metodología de un coordinador por evento, este método no te haría mucha falta.
+		// Nothing...
 	}
 
 	@Override

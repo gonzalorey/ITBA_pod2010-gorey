@@ -1,12 +1,10 @@
 package ar.edu.itba.pod.legajo47126.node;
 
 import java.io.IOException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 
 import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
@@ -16,8 +14,6 @@ import ar.edu.itba.pod.simul.communication.ConnectionManager;
 import ar.edu.itba.pod.simul.market.Market;
 import ar.edu.itba.pod.simul.market.MarketManager;
 import ar.edu.itba.pod.simul.simulation.SimulationManager;
-import ar.edu.itba.pod.simul.ui.ConsoleFeedbackCallback;
-import ar.edu.itba.pod.simul.ui.FeedbackMarketManager;
 
 public class NodeManagement {
 	
@@ -57,7 +53,6 @@ public class NodeManagement {
 //		configFile = new ConfigFile(uri.getPath());
 		
 		marketManager = new MarketManagerImpl(this);
-		marketManager = new FeedbackMarketManager(new ConsoleFeedbackCallback(), marketManager);	// TODO get rid of the fucking Feedbacks and use your own!!!!!!
 		marketManager.start();
 		
 		// obtain the reference to the market
@@ -65,7 +60,6 @@ public class NodeManagement {
 		
 		// instance the simulation manager
 		simulationManager = new SimulationManagerImpl(this);
-//		simulationManager = new FeedbackSimulationManager(new ConsoleFeedbackCallback(), simulationManager);
 		
 		// register the market in the simulation
 		simulationManager.register(Market.class, market);
@@ -78,12 +72,6 @@ public class NodeManagement {
 	}
 	
 	public static void main(String[] args) {
-		
-		// set the basic configuration for the logger, so everything goes to stdout
-//		BasicConfigurator.configure();
-		
-		URL uri = NodeManagement.class.getResource("log4j.config");
-		PropertyConfigurator.configure(uri);
 		
 		// create the Node Management
 		try {
