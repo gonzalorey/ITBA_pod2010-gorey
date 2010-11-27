@@ -175,6 +175,7 @@ public class DistributedMarket extends LocalMarket {
 	
 	public void feedbackLogger(ResourceStock stock, int amount, String op) {
 		logger.info(stock.name() + " --> " + op + ": " + amount + " of " + stock.resource() + "(stock: " + stock.current() + ")");
+		System.out.println(stock.name() + " --> " + op + ": " + amount + " of " + stock.resource() + "(stock: " + stock.current() + ")");
 	}
 
 	@Override

@@ -27,6 +27,8 @@ public class TransactionManager implements Transactionable {
 	private ThreePhaseCommit localThreePhaseCommit;
 	
 	private NodeManagement nodeManagement;
+	
+	Timer timer;
 
 	public TransactionManager(NodeManagement nodeManagement) throws RemoteException {
 		UnicastRemoteObject.exportObject(this, 0);
@@ -65,9 +67,10 @@ public class TransactionManager implements Transactionable {
 
 		// launch a schedule task that will execute the onTimeout function after
 		// a timeout delay
-		logger
-				.debug("Starting a schedule task that will take action after a timeout delay");
-		new Timer().schedule(new ScheduleTask(), timeout);
+		logger.debug("Starting a schedule task that will take action after a timeout delay");
+		timer = new Timer();
+		timer.schedule(new ScheduleTask(), timeout);
+		
 	}
 
 	@Override
@@ -225,16 +228,16 @@ public class TransactionManager implements Transactionable {
 			getConnectionManager(transaction.getDestinationNodeId())
 				.getThreePhaseCommit();
 
-		if (!localThreePhaseCommit.canCommit(transaction.getSourceNodeId(),
-				canCommitTimeout)) {
+		if (!localThreePhaseCommit.canCommit(transaction.getSourceNodeId(),canCommitTimeout)) {
 			logger.error("The local node couldn't start the Three-Phase-Commit");
+			timer.cancel();
 			return;
 		} 
 		logger.debug("CanCommit accepted by the local node");
 
-		if (!remoteThreePhaseCommit.canCommit(transaction.getSourceNodeId(),
-				canCommitTimeout)) {
+		if (!remoteThreePhaseCommit.canCommit(transaction.getSourceNodeId(),canCommitTimeout)) {
 			logger.error("The remote node couldn't start the Three-Phase-Commit");
+			timer.cancel();
 			return;
 		}
 		logger.debug("CanCommit accepted by the remote node");
@@ -244,6 +247,7 @@ public class TransactionManager implements Transactionable {
 		} catch (Exception e) {
 			logger.error("There was an error in the local Three-Phase-Commit on the preCommit state, aborting...");
 			logger.error("Error message: " + e.getMessage());
+			timer.cancel();
 			localThreePhaseCommit.abort();
 		}
 		logger.debug("PreCommit finished by the local node");
@@ -253,6 +257,7 @@ public class TransactionManager implements Transactionable {
 		} catch (Exception e) {
 			logger.error("There was an error in the remote Three-Phase-Commit on the preCommit state, aborting...");
 			logger.error("Error message: " + e.getMessage());
+			timer.cancel();
 			remoteThreePhaseCommit.abort();
 		}
 		logger.debug("PreCommit finished by the remote node");
@@ -262,6 +267,7 @@ public class TransactionManager implements Transactionable {
 		} catch (Exception e) {
 			logger.error("There was an error in the local Three-Phase-Commit on the doCommit state, aborting...");
 			logger.error("Error message: " + e.getMessage());
+			timer.cancel();
 			localThreePhaseCommit.abort();
 		}
 		logger.debug("DoCommit finished by the local node");
@@ -271,11 +277,13 @@ public class TransactionManager implements Transactionable {
 		} catch (Exception e) {
 			logger.error("There was an error in the remote Three-Phase-Commit on the doCommit state, aborting...");
 			logger.error("Error message: " + e.getMessage());
+			timer.cancel();
 			remoteThreePhaseCommit.abort();
 		}
 		logger.debug("DoCommit finished by the remote node");
-		
 		logger.debug("Three-Phase-Commit finished successfully");
+		
+		timer.cancel();
 	}
 
 	public ThreePhaseCommit getThreePhaseCommit() {

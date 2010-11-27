@@ -22,16 +22,20 @@ public class MarketManagerImpl implements MarketManager {
 	@Override
 	public void start() {
 		logger.info("Opening market...");
+		System.out.println("Opening market...");
 		distributedMarket = new DistributedMarket(nodeManagement);
 		distributedMarket.start();
 		logger.info("Market opened");
+		System.out.println("Market opened");
 	}
 	
 	@Override
 	public void shutdown() {
 		logger.info("Closing market...");
+		System.out.println("Closing market");
 		distributedMarket.finish();
 		logger.info("Market closed");
+		System.out.println("Market closed");
 	}
 	
 	@Override

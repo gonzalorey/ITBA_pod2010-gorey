@@ -40,33 +40,40 @@ public class SimulationManagerImpl implements SimulationManager {
 	@Override
 	public void start() {
 		logger.info("Starting simulation...");
+		System.out.println("Starting simulation...");
 		distributedSimulation.start();
 		started = true;
 		logger.info("Simulation started");
+		System.out.println("Simulation started...");
 	}
 	
 	@Override
 	public void shutdown() {
 		logger.info("Ending simulation...");
+		System.out.println("Ending simulation...");
 		simulation().shutdown();
 		started = false;
 		logger.info("Simulation ended");
+		System.out.println("Simulation ended");
 	}
 
 	@Override
 	public void addAgent(Agent agent) {
 		logger.info("Adding agent...");
-//		distributedSimulation.addAgent(agent);
-		
+		System.out.println("Adding agent");
 		// launch a new node coordinator to balance the node agents
 		Thread thread = new Thread(new NewAgentCoordinator(nodeManagement, agent));
-		thread.start();
+//		thread.start();
+		thread.run();
 	}
 	
 	@Override
 	public void removeAgent(Agent agent) {
 		logger.info("Removing agent...");
+		System.out.println("Removing agent");
 		distributedSimulation.removeAgent(agent);
+		logger.info("Agent removed");
+		System.out.println("Agent removed");
 	}
 
 	@Override
@@ -83,6 +90,7 @@ public class SimulationManagerImpl implements SimulationManager {
 	@Override
 	public <T> void register(Class<T> type, T instance) {
 		logger.info("Registering type " +  type.getSimpleName());
+		System.out.println("Registering type"  +  type.getSimpleName());
 		distributedSimulation.register(type, instance);
 	}
 	

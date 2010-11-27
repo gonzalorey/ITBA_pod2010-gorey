@@ -16,15 +16,18 @@ import org.apache.commons.cli.ParseException;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.ClusterAdministrationImpl;
-import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
+import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.DisconnectionCoordinator;
-import ar.edu.itba.pod.legajo47126.simul.coordinator.NewAgentCoordinator;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewNodeCoordinator;
 import ar.edu.itba.pod.legajo47126.simulation.AgentFactory;
 import ar.edu.itba.pod.legajo47126.simulation.SimulationManagerImpl;
+import ar.edu.itba.pod.legajo47126.simulation.AgentFactory.ConsumersProducers;
+import ar.edu.itba.pod.legajo47126.simulation.AgentFactory.SimpleConsumers;
+import ar.edu.itba.pod.legajo47126.simulation.AgentFactory.SimpleProducers;
 import ar.edu.itba.pod.simul.ObjectFactoryAlternative;
 import ar.edu.itba.pod.simul.communication.Message;
+import ar.edu.itba.pod.simul.market.Market;
 import ar.edu.itba.pod.simul.market.Resource;
 import ar.edu.itba.pod.simul.simulation.Agent;
 
@@ -39,20 +42,28 @@ public class NodeConsole {
 	private HelpFormatter helpFormatter;
 	
 	// console command options
-	private Option connect;
 	private Option creategroup;
+	private Option disconnect;
+	private Option connect;
+	
 	private Option createagents;
 	private Option createproducer;
 	private Option createconsumer;
-	private Option getload;
-	private Option requestresource;
+	private Option createconsprod;
+	
 	private Option startsimulation;
+	private Option shutdownsimulation;
+	private Option startmarket;
+	private Option shutdownmarket;
+
+	private Option help;
+	private Option exit;
+	
+	private Option getload;			// TODO should dissapear
+	private Option requestresource;	// TODO should dissapear
 	private Option getknownnodes;	// TODO should dissapear
 	private Option getgroupnodes;	// TODO should dissapear
 	private Option send;			// TODO should dissapear
-	private Option disconnect;		// TODO should dissapear
-	private Option help;
-	private Option exit;
 	
 	public NodeConsole() {
 		cmdParser = new GnuParser();
@@ -69,9 +80,11 @@ public class NodeConsole {
 		
 		createagents = new Option("createagents", "Creates a group of agents to test the simulation");
 		
-		createproducer = new Option("createproducer", "Creates an producer agent");
+		createproducer = new Option("createproducer", "Creates a producer agent:\n\t1-PIG IRON MINE\n\t2-COPPER MINE");
 		
-		createconsumer = new Option("createconsumer", "Creates an consumer agent");
+		createconsumer = new Option("createconsumer", "Creates a consumer agent:\n\t1-FACTORY");
+		
+		createconsprod = new Option("createconsprod", "Creates a producer and consumer agent");
 		
 		getload = new Option("getload", "Get the node agents load");
 		
@@ -80,6 +93,12 @@ public class NodeConsole {
 		requestresource.setArgName("nodeId");
 		
 		startsimulation = new Option("startsimulation", "Starts the simulation");
+		
+		shutdownsimulation = new Option("shutdownsimulation", "Shuts down the simulation");
+		
+		startmarket = new Option("startmarket", "Starts the market and registers it in the simulation");
+		
+		shutdownmarket = new Option("shutdownmarket", "Shuts down the market");
 		
 		getknownnodes = new Option("getknownnodes", "Lists the known nodes");
 		
@@ -126,14 +145,30 @@ public class NodeConsole {
 		options.addOption(connect);
 		options.addOption(disconnect);
 		options.addOption(creategroup);
+
+		options.addOption(createagents);
+		createproducer.setArgs(1);
+		createproducer.setArgName("Type of producer");
 		options.addOption(createproducer);
 		options.addOption(createconsumer);
-		options.addOption(getload);
+		options.addOption(createconsprod);
+		
+		startsimulation.setArgs(1);
+		startsimulation.setArgName("NumberOfSeconds");
+		startsimulation.setOptionalArg(true);
 		options.addOption(startsimulation);
-		options.addOption(getknownnodes);
-		options.addOption(getgroupnodes);
+
+		options.addOption(shutdownsimulation);
+		
+		options.addOption(startmarket);
+		options.addOption(shutdownmarket);
+		
 		options.addOption(help);
 		options.addOption(exit);
+		
+		options.addOption(getload);
+		options.addOption(getknownnodes);
+		options.addOption(getgroupnodes);
 	}
 	
 	public void runConsole(NodeManagement nodeManagement){
@@ -209,60 +244,6 @@ public class NodeConsole {
 					} catch (RemoteException e) {
 						logger.error("There was an error during the creation of the agents");
 						logger.error("Error message:" + e.getMessage());
-					}
-				} else if(cmd.hasOption(createproducer.getOpt())){
-					logger.info("Creating a producer agent...");
-
-					int numberOfAgents = 1;
-					if(cmd.getOptionValue(createproducer.getOpt()) != null) {
-						numberOfAgents = Integer.valueOf(cmd.getOptionValue(createproducer.getOpt()));
-					}
-					
-					if(numberOfAgents == 1){
-						Agent agent = AgentFactory.createProducerAgent();
-						Thread thread = new Thread(new NewAgentCoordinator(nodeManagement,agent));
-						thread.start();
-					} else {
-						try{
-							for(int i = 0; i < numberOfAgents; i++){
-								Agent agent = AgentFactory.createProducerAgent();
-								nodeManagement.getConnectionManager().getSimulationCommunication().startAgent(agent.getAgentDescriptor());
-								logger.info("Producer agent " + agent + " successfully added to the node");
-							}
-							
-							Thread thread = new Thread(new NewNodeCoordinator(nodeManagement));
-							thread.start();
-						} catch (RemoteException e) {
-							logger.error("There was an error during the creation of the agent");
-							logger.error("Error message:" + e.getMessage());
-						}
-					}
-				} else if(cmd.hasOption(createconsumer.getOpt())){
-					logger.info("Creating a consumer agent...");
-
-					int numberOfAgents = 1;
-					if(cmd.getOptionValue(createconsumer.getOpt()) != null) {
-						numberOfAgents = Integer.valueOf(cmd.getOptionValue(createconsumer.getOpt()));
-					}
-					
-					if(numberOfAgents == 1){
-						Agent agent = AgentFactory.createConsumerAgent();
-						Thread thread = new Thread(new NewAgentCoordinator(nodeManagement, agent));
-						thread.start();
-					} else {
-						try{
-							for(int i = 0; i < numberOfAgents; i++){
-								Agent agent = AgentFactory.createConsumerAgent();
-								nodeManagement.getConnectionManager().getSimulationCommunication().startAgent(agent.getAgentDescriptor());
-								logger.info("Consumer agent " + agent + " successfully added to the node");
-							}
-							
-							Thread thread = new Thread(new NewNodeCoordinator(nodeManagement));
-							thread.start();
-						} catch (RemoteException e) {
-							logger.error("There was an error during the creation of the agent");
-							logger.error("Error message:" + e.getMessage());
-						}
 					}
 				} else if(cmd.hasOption(getload.getOpt())){
 					logger.info("Getting the node agents load...");
@@ -359,6 +340,7 @@ public class NodeConsole {
 					logger.info("Connecting to [" + nodeId + "]...");
 					try{
 						ofa.connectToGroup(nodeId);
+						System.out.println("Connected to group [" + ofa.getConnectionManager().getClusterAdmimnistration().getGroupId() + "]");
 					} catch (Exception e) {
 						logger.error("There was an error during the connection to the node " + nodeId, e);
 					}
@@ -373,21 +355,115 @@ public class NodeConsole {
 					logger.info("Creating group...");
 					try{
 						ofa.createGroup();
+						System.out.println("Group [" + ofa.getConnectionManager().getClusterAdmimnistration().getGroupId() + "] created");
 					} catch (Exception e) {
 						logger.error("There was an error during the creation of the node group", e);
 					}
+				} else if(cmd.hasOption(startsimulation.getOpt())){
+					if(cmd.getOptionValue(startsimulation.getOpt()) != null) {
+						int seconds = Integer.valueOf(cmd.getOptionValue(startsimulation.getOpt()));
+						try{
+							logger.info("Starting the simulation for " + seconds + "seconds ...");
+							ofa.getSimulationManager().start();
+						} catch (Exception e) {
+							logger.error("There was an error while trying start the simulation", e);
+						}
+						
+						try {
+							Thread.sleep(1000 * seconds);
+						} catch (InterruptedException e) {
+							logger.error("The sleep time was interrupted", e);
+						}
+						
+						try{
+							logger.info("Shutting down the simulation...");
+							ofa.getSimulationManager().shutdown();
+						} catch (Exception e) {
+							logger.error("There was an error while trying start the simulation", e);
+						}
+					} else{
+						try {
+							logger.info("Starting the simulation");
+							ofa.getSimulationManager().start();
+						} catch (Exception e) {
+							logger.error("There was an error while trying start the simulation", e);
+						}
+					}
+				} else if(cmd.hasOption(shutdownsimulation.getOpt())){
+					logger.info("Shutting down the simulation...");
+					try {
+						ofa.getSimulationManager().shutdown();
+					} catch (Exception e) {
+						logger.error("There was an error while trying to shutdown the simulation", e);
+					}
+				}else if(cmd.hasOption(startmarket.getOpt())){
+					logger.info("Starting the market...");
+					try {
+						ofa.getMarketManager().start();
+						ofa.getSimulationManager().register(Market.class, ofa.getMarketManager().market());
+					} catch (Exception e) {
+						logger.error("There was an error while trying start the market", e);
+					}
+				} else if(cmd.hasOption(shutdownmarket.getOpt())){
+					logger.info("Shutting the simulation...");
+					try {
+						ofa.getMarketManager().shutdown();
+					} catch (Exception e) {
+						logger.error("There was an error while trying to shutdown the simulation", e);
+					}
+				} else if(cmd.hasOption(createagents.getOpt())){
+					logger.info("Creating group agents...");
+					
+					Agent mine1 = AgentFactory.createSimpleProducer(SimpleProducers.PIG_IRON_MINE);
+					Agent mine2 = AgentFactory.createSimpleProducer(SimpleProducers.COPPER_MINE);
+					Agent factory = AgentFactory.createSimpleConsumer(SimpleConsumers.FACTORY);
+					Agent refinery = AgentFactory.createConsumerProducer(ConsumersProducers.STEEL_REFINERY);
+					
+					ofa.getSimulationManager().addAgent(mine1);
+					ofa.getSimulationManager().addAgent(mine2);
+					ofa.getSimulationManager().addAgent(factory);
+					ofa.getSimulationManager().addAgent(refinery);
+					
+					logger.info("Agents added to the simulation");
+					
 				} else if(cmd.hasOption(createproducer.getOpt())){
-					logger.info("Creating a producer agent...");
+					int option;
 					try{
-						Agent agent = AgentFactory.createProducerAgent();
+						option = Integer.parseInt(cmd.getOptionValue(createproducer.getOpt()));
+					} catch (NumberFormatException e) {
+						logger.error("The argument is not a number", e);
+						break;
+					}
+					
+					Agent agent;
+					if(option == 1){
+						logger.info("Creating a PIG IRON MINE producer agent...");
+						agent = AgentFactory.createSimpleProducer(SimpleProducers.PIG_IRON_MINE);
+					} else if(option == 2){
+						logger.info("Creating a COPPER MINE producer agent...");
+						agent = AgentFactory.createSimpleProducer(SimpleProducers.COPPER_MINE);
+					} else {
+						logger.error("Argument doesn't match a propper agent");
+						break;
+					}
+					
+					try{
 						ofa.getSimulationManager().addAgent(agent);
 					} catch (Exception e) {
 						logger.error("There was an error during the creation of the agent", e);
 					}
 				} else if(cmd.hasOption(createconsumer.getOpt())){
-					logger.info("Creating a consumer agent...");
+					logger.info("Creating a FACTORY consumer agent...");
 					try{
-						Agent agent = AgentFactory.createConsumerAgent();
+						Agent agent = AgentFactory.createSimpleConsumer(SimpleConsumers.FACTORY);
+						ofa.getSimulationManager().addAgent(agent);
+					} catch (Exception e) {
+						logger.error("There was an error during the creation of the agent", e);
+					}
+				} else if(cmd.hasOption(createconsprod.getOpt())){
+					logger.info("Creating a STEEL REFINERY consumer producer agent...");
+					try{
+						Agent agent = AgentFactory.createConsumerProducer(ConsumersProducers.STEEL_REFINERY);
 						ofa.getSimulationManager().addAgent(agent);
 					} catch (Exception e) {
 						logger.error("There was an error during the creation of the agent", e);
@@ -395,26 +471,23 @@ public class NodeConsole {
 				} else if(cmd.hasOption(getload.getOpt())){
 					logger.info("Getting the node agents load... [WARNING: CAST TO LOCAL CLASS NEEDED]");
 					try{
-					int load = ((SimulationManagerImpl) ofa.getSimulationManager()).getAgentsLoad();
-					logger.info("Node agents load " + load);
+						int load = ((SimulationManagerImpl) ofa.getSimulationManager()).getAgentsLoad();
+						logger.info("Node agents load " + load);
+					System.out.println("Node agents load " + load);
 					} catch (Exception e) {
 						logger.error("There was an error while trying to obtain the node agent load", e);
-					}
-				} else if(cmd.hasOption(startsimulation.getOpt())){
-					logger.info("Starting the simulation...");
-					try {
-						ofa.getSimulationManager().start();
-					} catch (Exception e) {
-						logger.error("There was an error while trying start the simulation", e);
 					}
 				} else if(cmd.hasOption(getknownnodes.getOpt())){
 					logger.info("Getting the known nodes list... [WARNING: CAST TO LOCAL CLASS NEEDED]");
 					try{
-						if(((ConnectionManagerImpl) ofa.getConnectionManager()).getKnownNodes().size() == 0)
+						if(((ConnectionManagerImpl) ofa.getConnectionManager()).getKnownNodes().size() == 0){
 							logger.info("There are no known nodes");
+							System.out.println("There are no group nodes");
+						}
 
 						for(String nodeId : ((ConnectionManagerImpl) ofa.getConnectionManager()).getKnownNodes().keySet()){
 							logger.info(nodeId);
+							System.out.println(nodeId);
 						}
 					}catch(Exception e){
 						logger.error("There was an error while trying to get the list of known nodes", e);
@@ -423,12 +496,15 @@ public class NodeConsole {
 					logger.info("Getting the group nodes list...");
 					try{
 						if(((ClusterAdministrationImpl)ofa.getConnectionManager().
-								getClusterAdmimnistration()).getGroupNodes().size() == 0)
+								getClusterAdmimnistration()).getGroupNodes().size() == 0){
 							logger.info("There are no group nodes");
+							System.out.println("There are no group nodes");
+						}
 
 						for(String nodeId : ((ClusterAdministrationImpl)ofa.getConnectionManager().
 								getClusterAdmimnistration()).getGroupNodes()){
 							logger.info(nodeId);
+							System.out.println(nodeId);
 						}
 					}catch(Exception e){
 						logger.error("There was an error while trying to get the list of group nodes", e);

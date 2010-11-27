@@ -106,4 +106,11 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 		return nodeManagement.getSimulationManager();
 	}
 
+	public NodeManagement getNodeManagement(){
+		return nodeManagement;
+	}
+	
+	public void closeObject(){
+		nodeManagement.setShouldExit(true);
+	}
 }
