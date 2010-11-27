@@ -11,7 +11,6 @@ import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
 import ar.edu.itba.pod.legajo47126.market.MarketManagerImpl;
 import ar.edu.itba.pod.legajo47126.simulation.SimulationManagerImpl;
 import ar.edu.itba.pod.simul.communication.ConnectionManager;
-import ar.edu.itba.pod.simul.market.Market;
 import ar.edu.itba.pod.simul.market.MarketManager;
 import ar.edu.itba.pod.simul.simulation.SimulationManager;
 
@@ -49,55 +48,20 @@ public class NodeManagement {
 		String configFileName = "node.conf";
 		configFile = new ConfigFile(configFileName);
 		
+		// configuration class to get the properties from the config file		
 //		URL uri = NodeManagement.class.getResource("node.conf");
 //		configFile = new ConfigFile(uri.getPath());
 		
 		marketManager = new MarketManagerImpl(this);
-		marketManager.start();
-		
-		// obtain the reference to the market
-		Market market = marketManager.market();
-		
+
 		// instance the simulation manager
 		simulationManager = new SimulationManagerImpl(this);
-		
-		// register the market in the simulation
-		simulationManager.register(Market.class, market);
-		
+
 		// create the connection manager
 		connectionManager = new ConnectionManagerImpl(this);
-		logger.info("Connection Manager initialized successfully");
+		logger.debug("Connection Manager initialized successfully");
 		
 		shouldExit = false;
-	}
-	
-	public static void main(String[] args) {
-		
-		// create the Node Management
-		try {
-			NodeManagement nodeManagement = new NodeManagement(args);
-			
-			// creaate and run the console
-			new NodeConsole().runConsole(nodeManagement);
-			
-		} catch (UnknownHostException e) {
-			logger.fatal("The local node couldn't be started. Aborting execution");
-			logger.fatal("Error message:" + e.getMessage(), e);
-			return;
-		} catch (RemoteException e) {
-			logger.fatal("There was an error during the Connection Manager initialization. Aborting execution");
-			logger.fatal("Error message:" + e.getMessage(), e);
-			return;
-		} catch (IOException e) {
-			logger.error("'node.conf' file not found. Using default configurations", e);
-            logger.error("Error message:" + e.getMessage(), e);
-		} catch (Exception e) {
-			logger.error("An unexpected exception ocurred");
-            logger.error("Error message:" + e.getMessage(), e);
-		}
-
-		logger.info("Bye!");
-
 	}
 	
 	/**
