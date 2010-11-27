@@ -172,4 +172,33 @@ public class DistributedMarket extends LocalMarket {
 		}
 	}
 	
+	
+	public void feedbackLogger(ResourceStock stock, int amount, String op) {
+		logger.info(stock.name() + " --> " + op + ": " + amount + " of " + stock.resource() + "(stock: " + stock.current() + ")");
+	}
+
+	@Override
+	public void offer(ResourceStock stock, int maxQuantity) {
+		feedbackLogger(stock, maxQuantity, "OFFER");
+		super.offer(stock, maxQuantity);
+	}
+	
+	@Override
+	public void offerMore(ResourceStock stock, int amount) {
+		feedbackLogger(stock, amount, "OFFER MORE");
+		super.offerMore(stock, amount);
+	}
+	
+	@Override
+	public void request(ResourceStock stock, int maxQuantity) {
+		feedbackLogger(stock, maxQuantity, "REQUEST");
+		super.request(stock, maxQuantity);
+	}
+	
+	@Override
+	public void requestMore(ResourceStock stock, int amount) {
+		feedbackLogger(stock, amount, "REQUEST MORE");
+		super.requestMore(stock, amount);
+	}
+	
 }

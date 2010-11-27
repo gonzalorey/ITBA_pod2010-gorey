@@ -5,7 +5,6 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 
-import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.legajo47126.communication.ClusterAdministrationImpl;
@@ -28,16 +27,10 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 	NodeManagement nodeManagement;
 	
 	public ObjectFactoryAlternativeImpl(String args[]) throws UnknownHostException, RemoteException, IOException {
-		// set the basic configuration for the logger, so everything goes to stdout
-		BasicConfigurator.configure();	//TODO set a propper configuration file for the logger
-		
 		nodeManagement = new NodeManagement(args);
 	}
 	
 	public ObjectFactoryAlternativeImpl() throws UnknownHostException, RemoteException, IOException {
-		// set the basic configuration for the logger, so everything goes to stdout
-		BasicConfigurator.configure();	//TODO set a propper configuration file for the logger
-		
 		String[] args = {};
 		nodeManagement = new NodeManagement(args);
 	}
