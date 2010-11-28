@@ -26,9 +26,11 @@ public class ThreePhaseCommitImpl implements ThreePhaseCommit {
 	
 	private NodeManagement nodeManagement;
 	
+	private Timer timer;
+	
 	public ThreePhaseCommitImpl(NodeManagement nodeManagement) throws RemoteException {
 		UnicastRemoteObject.exportObject(this, 0);
-		
+	
 		this.nodeManagement = nodeManagement;
 		
 		state = ThreePhaseCommitState.START;
@@ -43,7 +45,9 @@ public class ThreePhaseCommitImpl implements ThreePhaseCommit {
 			
 			// launch a schedule task that will execute the onTimeout function after a timeout delay
 			logger.debug("Starting a schedule task that will take action after a timeout delay");
-			new Timer().schedule(new ScheduleTask(), timeout);
+			
+			timer = new Timer();
+			timer.schedule(new ScheduleTask(), timeout);
 			
 			// set the next state
 			logger.debug("Setting next state CAN_COMMIT_DONE");
@@ -58,11 +62,15 @@ public class ThreePhaseCommitImpl implements ThreePhaseCommit {
 	public void preCommit(String coordinatorId) throws RemoteException {
 		logger.debug("PreCommit with coordinator [" + coordinatorId + "]...");
 		
-		if(!this.coordinatorId.equals(coordinatorId))
+		if(!this.coordinatorId.equals(coordinatorId)){
+			timer.cancel();
 			throw new IllegalArgumentException("This coordinator isn't the same that invoked the last canCommit");
+		}
 		
-		if(state != ThreePhaseCommitState.CAN_COMMIT_DONE)
+		if(state != ThreePhaseCommitState.CAN_COMMIT_DONE){
+			timer.cancel();
 			throw new IllegalArgumentException("The current state isn't CAN_COMMIT_DONE");
+		}
 		
 		// set the next state
 		logger.debug("Setting next state PRE_COMMIT_DONE");
@@ -73,11 +81,15 @@ public class ThreePhaseCommitImpl implements ThreePhaseCommit {
 	public void doCommit(String coordinatorId) throws RemoteException {
 		logger.debug("DoCommit with coordinator [" + coordinatorId + "]...");
 		
-		if(!this.coordinatorId.equals(coordinatorId))
+		if(!this.coordinatorId.equals(coordinatorId)){
+			timer.cancel();			
 			throw new IllegalArgumentException("This coordinator isn't the same that invoked the last preCommit");
+		}
 		
-		if(state != ThreePhaseCommitState.PRE_COMMIT_DONE)
+		if(state != ThreePhaseCommitState.PRE_COMMIT_DONE){
+			timer.cancel();
 			throw new IllegalArgumentException("The current state isn't PRE_COMMIT_DONE");
+		}
 		
 		Payload payload = nodeManagement.getConnectionManager().getConnectionManager(coordinatorId).
 			getNodeCommunication().getPayload();
@@ -90,14 +102,20 @@ public class ThreePhaseCommitImpl implements ThreePhaseCommit {
 		// set the next state
 		logger.debug("Setting next state DO_COMMIT_DONE");
 		state = ThreePhaseCommitState.DO_COMMIT_DONE;
+		
+		logger.debug("Cancel the timer and call NOW onTimeout()");
+		timer.cancel();
+		onTimeout();
 	}
 	
 	@Override
 	public void abort() throws RemoteException {
 		logger.debug("Abort arrived...");
+		timer.cancel();
 		
-		if(state == ThreePhaseCommitState.START)
+		if(state == ThreePhaseCommitState.START){
 			throw new IllegalArgumentException("Method invoked before canCommit was invoked");
+		}
 			
 		// set the initial state
 		state = ThreePhaseCommitState.START;
@@ -110,6 +128,7 @@ public class ThreePhaseCommitImpl implements ThreePhaseCommit {
 		switch (state) {
 		case START:
 			logger.debug("START state, throw exception");
+			timer.cancel();
 			throw new IllegalArgumentException("Method invoked before canCommit was invoked");
 		case CAN_COMMIT_DONE:
 			// the timeout arrived before the preCommit was done, so abort
@@ -123,7 +142,7 @@ public class ThreePhaseCommitImpl implements ThreePhaseCommit {
 			break;
 		case DO_COMMIT_DONE:
 			// the timeout arrived after the doCommit was done, so set the next state as the initial
-			logger.debug("DO_COMMIT_DONE state, set initial state START");
+			logger.debug("DO_COMMIT_DONE state, set initial state START and clear the transaction");
 			state = ThreePhaseCommitState.START;
 			break;
 		default:

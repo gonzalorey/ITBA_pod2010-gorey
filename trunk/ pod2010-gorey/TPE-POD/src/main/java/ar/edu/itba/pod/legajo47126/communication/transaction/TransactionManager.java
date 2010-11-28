@@ -35,32 +35,26 @@ public class TransactionManager implements Transactionable {
 		
 		this.nodeManagement = nodeManagement;
 
-		transactionAcceptingTimeout = nodeManagement.getConfigFile()
-				.getProperty("TransactionAcceptingTimeout", 200);
-		canCommitTimeout = nodeManagement.getConfigFile().getProperty(
-				"CanCommitTimeout", 300);
+		transactionAcceptingTimeout = nodeManagement.getConfigFile().getProperty("TransactionAcceptingTimeout", 200);
+		canCommitTimeout = nodeManagement.getConfigFile().getProperty("CanCommitTimeout", 300);
 
 		// create the three phase commit of the transaction
 		localThreePhaseCommit = new ThreePhaseCommitImpl(nodeManagement);
 	}
 
 	@Override
-	public void beginTransaction(String remoteNodeId, long timeout)
-			throws RemoteException {
-		logger.debug("Beginning a transaction with node [" + remoteNodeId
-				+ "] and timeout [" + timeout + "]...");
+	public void beginTransaction(String remoteNodeId, long timeout)	throws RemoteException {
+		logger.debug("Beginning a transaction with node [" + remoteNodeId + "] and timeout [" + timeout + "]...");
 
 		if (isTransactioning()) {
 			logger.error("A transaction is currently running");
-			throw new IllegalStateException(
-					"The node is already in a transaction context");
+			throw new IllegalStateException("The node is already in a transaction context");
 		}
 
 		// accept the connection from the other side
 		logger.debug("Call the transaction accept of the destination node");
 		nodeManagement.getConnectionManager().getConnectionManager(remoteNodeId)
-				.getNodeCommunication().acceptTransaction(
-						nodeManagement.getLocalNode().getNodeId());
+				.getNodeCommunication().acceptTransaction(nodeManagement.getLocalNode().getNodeId());
 
 		logger.debug("Transaction successfully accepted");
 		setTransaction(nodeManagement.getLocalNode().getNodeId(), remoteNodeId);
@@ -75,8 +69,7 @@ public class TransactionManager implements Transactionable {
 
 	@Override
 	public void acceptTransaction(String remoteNodeId) throws RemoteException {
-		logger.debug("Accepting a transaction request from node ["
-				+ remoteNodeId + "]...");
+		logger.debug("Accepting a transaction request from node [" + remoteNodeId + "]...");
 
 		if (isTransactioning()) {
 			logger.debug("A transaction is currently running, sleep "
@@ -109,28 +102,28 @@ public class TransactionManager implements Transactionable {
 			throw new IllegalStateException("No transaction currently running");
 		}
 
-		// do the three phase commit
-		doThreePhaseCommit();
-		logger.debug("Three-Phase-Commit successfully finished");
-
-		// if this is the source node, end the destination node transaction
-		if (transaction.getSourceNodeId().equals((nodeManagement.getLocalNode().getNodeId()))) {
-			logger.debug("Call the end transaction of the destination node");
-			nodeManagement.getConnectionManager().getConnectionManager(
-					transaction.getDestinationNodeId()).getNodeCommunication()
-					.endTransaction();
+		if(transaction.getSourceNodeId().equals(nodeManagement.getLocalNode().getNodeId())){
+			// do the three phase commit
+			doThreePhaseCommit();
+			logger.debug("Three-Phase-Commit successfully finished");
+			
+			// do the endTransaction of the destination other node
+			logger.debug("Calling the end transaction of the destination node");
+			nodeManagement.getConnectionManager().getConnectionManager(transaction.getDestinationNodeId()).
+				getNodeCommunication().endTransaction();
+			
+			logger.debug("Cancel the timer");
+			timer.cancel();
 		}
-
+		
 		// clear the transaction to accept more
 		clearTransaction();
 		logger.debug("Transaction successfully ended");
 	}
 
 	@Override
-	public void exchange(Resource resource, int amount, String sourceNode,
-			String destinationNode) throws RemoteException {
-		logger.debug("Exchanging an amount of [" + amount
-				+ "] of the resource [" + resource + "] from node ["
+	public void exchange(Resource resource, int amount, String sourceNode, String destinationNode) throws RemoteException {
+		logger.debug("Exchanging an amount of [" + amount + "] of the resource [" + resource + "] from node ["
 				+ sourceNode + "] to node [" + destinationNode + "]");
 
 		if (!isTransactioning()) {
@@ -140,14 +133,13 @@ public class TransactionManager implements Transactionable {
 
 		if (sourceNode.equals(destinationNode)) {
 			logger.debug("The source node and the destination node are the same");
-			throw new IllegalStateException(
-					"The source node and the destination node are the same");
+			throw new IllegalStateException("The source node and the destination node are the same");
 		}
 
 		transaction.setResource(resource, amount);
 
 		// if this is the source node, do the exchange of the destination node
-		if (transaction.getSourceNodeId().equals(nodeManagement.getLocalNode().getNodeId())) {
+		if (sourceNode.equals(nodeManagement.getLocalNode().getNodeId())) {
 			logger.debug("Call the exchange of the destination node");
 			nodeManagement.getConnectionManager().getConnectionManager(transaction.getDestinationNodeId()).
 				getNodeCommunication().exchange(resource,amount, sourceNode, destinationNode);
@@ -163,14 +155,12 @@ public class TransactionManager implements Transactionable {
 
 		if (!isTransactioning()) {
 			logger.debug("No transaction is currently running");
-			throw new IllegalStateException(
-					"No transaction is currently running");
+			throw new IllegalStateException("No transaction is currently running");
 		}
 
 		if (!transaction.isTransactionDone()) {
 			logger.debug("The transaction hasn't been finished");
-			throw new IllegalStateException(
-					"The transaction hasn't been finished");
+			throw new IllegalStateException("The transaction hasn't been finished");
 		}
 
 		return transaction.getPayload();
@@ -182,8 +172,7 @@ public class TransactionManager implements Transactionable {
 
 		if (transaction.isTransactionDone()) {
 			logger.debug("A transaction is currently running");
-			throw new IllegalStateException(
-					"A transaction is currently running");
+			throw new IllegalStateException("A transaction is currently running");
 		}
 
 		try {
@@ -202,22 +191,25 @@ public class TransactionManager implements Transactionable {
 			logger.debug("Call the exchange of the destination node");
 			nodeManagement.getConnectionManager().getConnectionManager(transaction.getDestinationNodeId()).
 				getNodeCommunication().rollback();
+			
+			logger.debug("Cancell the timer");
+			timer.cancel();
 		}
 		
 		logger.debug("Rollback successfully finished");
 	}
 
 	// TODO see if these methods should be eliminated
-	private synchronized void setTransaction(String sourceNodeId,
+	public synchronized void setTransaction(String sourceNodeId,
 			String destinationNodeId) {
 		transaction = new TransactionContainer(sourceNodeId, destinationNodeId);
 	}
 
-	private synchronized boolean isTransactioning() {
+	public synchronized boolean isTransactioning() {
 		return (transaction != null);
 	}
 
-	private synchronized void clearTransaction() {
+	public synchronized void clearTransaction() {
 		transaction = null;
 	}
 
@@ -230,14 +222,12 @@ public class TransactionManager implements Transactionable {
 
 		if (!localThreePhaseCommit.canCommit(transaction.getSourceNodeId(),canCommitTimeout)) {
 			logger.error("The local node couldn't start the Three-Phase-Commit");
-			timer.cancel();
 			return;
 		} 
 		logger.debug("CanCommit accepted by the local node");
 
 		if (!remoteThreePhaseCommit.canCommit(transaction.getSourceNodeId(),canCommitTimeout)) {
 			logger.error("The remote node couldn't start the Three-Phase-Commit");
-			timer.cancel();
 			return;
 		}
 		logger.debug("CanCommit accepted by the remote node");
@@ -247,7 +237,6 @@ public class TransactionManager implements Transactionable {
 		} catch (Exception e) {
 			logger.error("There was an error in the local Three-Phase-Commit on the preCommit state, aborting...");
 			logger.error("Error message: " + e.getMessage());
-			timer.cancel();
 			localThreePhaseCommit.abort();
 		}
 		logger.debug("PreCommit finished by the local node");
@@ -257,7 +246,6 @@ public class TransactionManager implements Transactionable {
 		} catch (Exception e) {
 			logger.error("There was an error in the remote Three-Phase-Commit on the preCommit state, aborting...");
 			logger.error("Error message: " + e.getMessage());
-			timer.cancel();
 			remoteThreePhaseCommit.abort();
 		}
 		logger.debug("PreCommit finished by the remote node");
@@ -267,7 +255,6 @@ public class TransactionManager implements Transactionable {
 		} catch (Exception e) {
 			logger.error("There was an error in the local Three-Phase-Commit on the doCommit state, aborting...");
 			logger.error("Error message: " + e.getMessage());
-			timer.cancel();
 			localThreePhaseCommit.abort();
 		}
 		logger.debug("DoCommit finished by the local node");
@@ -277,13 +264,10 @@ public class TransactionManager implements Transactionable {
 		} catch (Exception e) {
 			logger.error("There was an error in the remote Three-Phase-Commit on the doCommit state, aborting...");
 			logger.error("Error message: " + e.getMessage());
-			timer.cancel();
 			remoteThreePhaseCommit.abort();
 		}
 		logger.debug("DoCommit finished by the remote node");
 		logger.debug("Three-Phase-Commit finished successfully");
-		
-		timer.cancel();
 	}
 
 	public ThreePhaseCommit getThreePhaseCommit() {
