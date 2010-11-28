@@ -19,7 +19,7 @@ public class DistributedMarket extends LocalMarket {
 	// instance of the log4j logger
 	private static Logger logger = Logger.getLogger(DistributedMarket.class);
 	
-	protected final Multiset<ResourceStock> remotelySelling = ConcurrentHashMultiset.create();
+	protected final Multiset<Resource> remotelySelling = ConcurrentHashMultiset.create();
 	
 	private NodeManagement nodeManagement;
 	
@@ -43,10 +43,10 @@ public class DistributedMarket extends LocalMarket {
 			}
 			
 			if(!transfered){
-				for (ResourceStock seller : remotelySelling) {
-					if (buyer.resource().equals(seller.resource())) {
+				for (Resource seller : remotelySelling) {
+					if (buyer.resource().equals(seller)) {
 						transferRemote(buyer, seller);
-						logger.info("Selling resource [" + seller.resource() + "] to the remote [" + buyer.name() + "]");
+						logger.info("Selling resource [" + seller + "] to the remote [" + buyer.name() + "]");
 					}
 				}
 			}
@@ -70,46 +70,7 @@ public class DistributedMarket extends LocalMarket {
 		}
 	}
 	
-//	@Override
-//	protected void matchBothEnds() {
-//		logger.debug("Matching both ends...");
-//		
-//		for (ResourceStock buyer : buying) {
-//			for (ResourceStock seller : selling) {
-//				if (buyer.resource().equals(seller.resource())) {
-//					transfer(buyer, seller);
-//					logger.info("Selling " + buyer.resource() + " to " + seller.name());
-//				}
-//			}
-//		
-//			// the buyer amount could have been altered
-//			if(buying.count(buyer) != 0){  
-//				for (ResourceStock seller : remotelySelling) {
-//					if (buyer.resource().equals(seller.resource())) {
-//						transferRemote(buyer, seller);
-//						logger.info("Selling " + buyer.resource() + " to the remote " + seller.name());
-//					}
-//				}
-//				
-//				// the buyer amount could have been altered
-//				int amount = buying.count(buyer);
-//				if(amount != 0){
-//					Message message = MessageFactory.ResourceRequestMessage(nodeManagement.getLocalNode().getNodeId(),
-//							buyer.resource(), amount);
-//					logger.info("Sending broadcast message for buying an amount of " + amount + " of " + buyer.resource());
-//					try {
-//						logger.debug("Broadcasting message [" + message + "]");
-//						nodeManagement.getConnectionManager().getGroupCommunication().broadcast(message);
-//					} catch (RemoteException e) {
-//						logger.error("An error ocurred while trying to broadcast the message");
-//						logger.error("Error message: " + e.getMessage());
-//					}
-//				}
-//			}
-//		}
-//	}
-	
-	protected int transferRemote(ResourceStock buyer, ResourceStock seller) {
+	protected int transferRemote(ResourceStock buyer, Resource seller) {
 		while(true) {
 			int wanted = buying.count(buyer);
 			int available = remotelySelling.count(seller);
@@ -124,7 +85,7 @@ public class DistributedMarket extends LocalMarket {
 				boolean sent = buying.setCount(buyer, wanted, wanted - transfer);
 				if (sent) {
 					try {
-						seller.remove(transfer);
+						buyer.add(transfer);
 					}
 					catch (RuntimeException e) {
 						remotelySelling.add(seller, transfer);
@@ -140,7 +101,7 @@ public class DistributedMarket extends LocalMarket {
 						buying.remove(buyer, transfer);
 						continue;
 					}
-					logTransfer(seller, buyer, transfer);
+//					logTransfer(seller, buyer, transfer);
 					
 					return transfer;
 				}
@@ -154,12 +115,13 @@ public class DistributedMarket extends LocalMarket {
 	}
 	
 	public void addToRemotelySelling(Resource resource, int amount){
-		for(ResourceStock seller : remotelySelling){
-			if(seller.resource().equals(resource)){
-				remotelySelling.setCount(seller, remotelySelling.count(seller) + amount);
-				break;
-			}
-		}
+//		for(ResourceStock seller : selling){
+//			if(seller.resource().equals(resource)){
+//				selling.setCount(seller, selling.count(seller) + amount);
+//				break;
+//			}
+//		}
+		remotelySelling.setCount(resource, remotelySelling.count(resource) + amount);
 	}
 	
 	public void removeFromSelling(Resource resource, int amount){

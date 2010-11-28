@@ -37,8 +37,11 @@ public class DistributedSimulation implements Simulation, SimulationInspector{
 	
 	private final Map<Class<?>, Object> env = Maps.newHashMap();
 	
-	public DistributedSimulation(TimeMapper timeMapper) {
+	private SimulationManagerImpl simulationManager;
+	
+	public DistributedSimulation(TimeMapper timeMapper, SimulationManagerImpl simulationManagerImpl) {
 		this.timeMapper = timeMapper;
+		this.simulationManager = simulationManagerImpl;
 		
 		localAgents = new ConcurrentLinkedQueue<Agent>();
 	}
@@ -86,6 +89,9 @@ public class DistributedSimulation implements Simulation, SimulationInspector{
 		
 		localAgents.add(agent);
 		agent.onBind(this);
+		
+		if(simulationManager.isStarted())
+			agent.start();
 	}
 	
 	public void removeAgent(Agent agent) {
@@ -115,9 +121,9 @@ public class DistributedSimulation implements Simulation, SimulationInspector{
 	}
 
 	public void start() {
-		for(Agent agent : localAgents){
-			agent.start();
-		}
+//		for(Agent agent : localAgents){
+//			agent.start();
+//		}
 	}
 
 	/**

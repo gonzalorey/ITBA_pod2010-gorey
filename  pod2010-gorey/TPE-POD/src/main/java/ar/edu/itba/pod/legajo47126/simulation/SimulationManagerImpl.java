@@ -34,7 +34,7 @@ public class SimulationManagerImpl implements SimulationManager {
 		this.nodeManagement = nodeManagement;
 		int amountOfHoursPerSecond = nodeManagement.getConfigFile().getProperty("AmountOfHoursPerSecond", 6); 
 		TimeMapper timeMapper = TimeMappers.oneSecondEach(amountOfHoursPerSecond, TimeUnit.HOURS);
-		distributedSimulation = new DistributedSimulation(timeMapper);
+		distributedSimulation = new DistributedSimulation(timeMapper, this);
 	}
 	
 	@Override
@@ -99,9 +99,10 @@ public class SimulationManagerImpl implements SimulationManager {
 		return distributedSimulation.getAgents();
 	}
 	
-	public void addAgentToLocalSimulation(Agent agent) {
+	public Agent addAgentToLocalSimulation(Agent agent) {
 		logger.info("Adding agent to the local simulation...");
 		distributedSimulation.addAgent(agent);
+		return agent;
 	}
 	
 	public int getAgentsLoad() {
