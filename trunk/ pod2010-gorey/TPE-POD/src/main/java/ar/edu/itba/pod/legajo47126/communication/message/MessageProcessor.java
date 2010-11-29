@@ -219,6 +219,15 @@ public class MessageProcessor implements Runnable {
 	private void doResourceRequest(MessageContainer messageContainer) {
 		ResourceRequestPayload payload = (ResourceRequestPayload) messageContainer.getMessage().getPayload();
 		long timeout = nodeManagement.getConfigFile().getProperty("TransactionTimeout", 1000);
+		
+		logger.info("Looking for an amount of [" + payload.getAmountRequested() + "] of resource [" + payload.getResource() + "]");
+		int localStock = ((DistributedMarket) nodeManagement.getMarketManager().market()).
+			getLocalStock(payload.getResource(), payload.getAmountRequested());
+		if(localStock == 0){
+			logger.info("There are no such resources here");
+			return;
+		}
+
 		try{
 			// begin the transaction with the remote node
 			logger.info("Beginning transaction with [" + messageContainer.getMessage().getNodeId() + 
@@ -227,11 +236,10 @@ public class MessageProcessor implements Runnable {
 					messageContainer.getMessage().getNodeId(), timeout);
 			
 			// exchange my resources
-			logger.info("Exchanging an amount of [" + payload.getAmountRequested() + "] " +
+			logger.info("Exchanging an amount of [" + localStock + "] " +
 					"of resource [" + payload.getResource() + "]");
 			nodeManagement.getConnectionManager().getNodeCommunication().exchange(payload.getResource(), 
-					payload.getAmountRequested(), nodeManagement.getLocalNode().getNodeId(), 
-					messageContainer.getMessage().getNodeId());
+					localStock, nodeManagement.getLocalNode().getNodeId(), messageContainer.getMessage().getNodeId());
 									
 			// end the transaction
 			logger.info("Ending the transaction");
@@ -273,8 +281,7 @@ public class MessageProcessor implements Runnable {
 	}
 	
 	private void doResourceTransferCanceled() {
-		// TODO Auto-generated method stub
-		
+		// DO NOTHING
 	}
 	
 }

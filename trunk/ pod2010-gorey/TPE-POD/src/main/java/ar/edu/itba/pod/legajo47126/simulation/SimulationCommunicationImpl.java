@@ -73,6 +73,7 @@ public class SimulationCommunicationImpl implements SimulationCommunication {
 		for(int i = 0; i < numberOfAgents; i++){
 			Agent agent = ((SimulationManagerImpl) nodeManagement.getSimulationManager()).getAgentsLoadQueue().remove();
 			migratingAgents.add(agent.getAgentDescriptor());
+			agent.finish();
 			logger.debug("Agent [" + agent + "] removed from the node simulation");
 		}
 		

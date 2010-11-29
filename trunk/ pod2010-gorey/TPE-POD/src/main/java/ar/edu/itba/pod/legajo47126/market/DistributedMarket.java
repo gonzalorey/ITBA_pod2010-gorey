@@ -134,6 +134,19 @@ public class DistributedMarket extends LocalMarket {
 		}
 	}
 	
+	public int getLocalStock(Resource resource, int amount){
+		int localStock = 0;
+		for(ResourceStock seller : selling){
+			if(seller.resource().equals(resource)){
+				localStock = selling.count(seller);
+				if(amount < localStock)
+					localStock = amount;
+				break;
+			}
+		}
+		
+		return localStock;
+	}
 	
 	public void feedbackLogger(ResourceStock stock, int amount, String op) {
 		logger.info(stock.name() + " --> " + op + ": " + amount + " of " + stock.resource() + "(stock: " + stock.current() + ")");
