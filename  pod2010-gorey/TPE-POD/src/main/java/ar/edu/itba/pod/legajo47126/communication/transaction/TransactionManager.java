@@ -170,9 +170,9 @@ public class TransactionManager implements Transactionable {
 	public void rollback() throws RemoteException {
 		logger.debug("Rollback the transaction...");
 
-		if (transaction.isTransactionDone()) {
-			logger.debug("A transaction is currently running");
-			throw new IllegalStateException("A transaction is currently running");
+		if (!isTransactioning()) {
+			logger.debug("A transaction is not currently running");
+			throw new IllegalStateException("A transaction is not currently running");
 		}
 
 		try {
@@ -192,7 +192,7 @@ public class TransactionManager implements Transactionable {
 			nodeManagement.getConnectionManager().getConnectionManager(transaction.getDestinationNodeId()).
 				getNodeCommunication().rollback();
 			
-			logger.debug("Cancell the timer");
+			logger.debug("Cancel the timer");
 			timer.cancel();
 		}
 		
