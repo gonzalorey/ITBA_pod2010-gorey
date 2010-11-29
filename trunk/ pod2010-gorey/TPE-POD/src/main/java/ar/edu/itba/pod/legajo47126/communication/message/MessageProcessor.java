@@ -207,6 +207,14 @@ public class MessageProcessor implements Runnable {
 	
 	private void doNodeMarketDataRequest(MessageContainer messageContainer) {
 		try {
+			// broadcast the message
+			nodeManagement.getConnectionManager().getGroupCommunication().broadcast(messageContainer.getMessage());
+			logger.debug("Message successfully broadcasted");
+		} catch (RemoteException e) {
+			logger.error("The message couldn't be broadcasted");
+			logger.error("Error message: " + e.getMessage());
+		}
+		try {
 			logger.debug("Sending a NODE_MARKET_DATA message...");
 			Message message = MessageFactory.NodeMarketDataMessage(nodeManagement.getLocalNode().getNodeId(), 
 					nodeManagement.getMarketManager().market().marketData());
@@ -218,6 +226,15 @@ public class MessageProcessor implements Runnable {
 	}
 	
 	private void doResourceRequest(MessageContainer messageContainer) {
+		try {
+			// broadcast the message
+			nodeManagement.getConnectionManager().getGroupCommunication().broadcast(messageContainer.getMessage());
+			logger.debug("Message successfully broadcasted");
+		} catch (RemoteException e) {
+			logger.error("The message couldn't be broadcasted");
+			logger.error("Error message: " + e.getMessage());
+		}
+		
 		ResourceRequestPayload payload = (ResourceRequestPayload) messageContainer.getMessage().getPayload();
 		long timeout = nodeManagement.getConfigFile().getProperty("TransactionTimeout", 1000);
 		

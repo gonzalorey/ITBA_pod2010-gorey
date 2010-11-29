@@ -32,7 +32,7 @@ public class Statistics {
 	}
 	
 	public void addStatistics(String nodeId, TransferHistory history){
-		if(statisticsMap.contains(nodeId))
+		if(statisticsMap.containsKey(nodeId))
 			statisticsMap.replace(nodeId, history.getTransactionsPerSecond());
 		else
 			statisticsMap.put(nodeId, history.getTransactionsPerSecond());
