@@ -47,6 +47,7 @@ public class NodeManagement {
 		// configuration class to get the properties from the config file
 		String configFileName = "node.conf";
 		configFile = new ConfigFile(configFileName);
+		logger.debug(configFile);
 		
 		// configuration class to get the properties from the config file		
 //		URL uri = NodeManagement.class.getResource("node.conf");

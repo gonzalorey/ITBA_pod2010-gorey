@@ -47,8 +47,6 @@ public class GetStatistics implements Runnable {
 		} catch (InterruptedException e) {
 			logger.error("There was an error while waiting for the messages to arrive", e);
 		}
-
-		nodeManagement.getMarketManager().inspector();
 		
 		Statistics.getInstance().printOnScreen();
 	}

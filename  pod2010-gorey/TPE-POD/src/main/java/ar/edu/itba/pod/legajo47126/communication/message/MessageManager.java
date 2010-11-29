@@ -71,13 +71,13 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 				if(!nodeManagement.getConnectionManager().getConnectionManager(nodeId).getGroupCommunication()
 						.getListener().onMessageArrive(message)){
 					// lowering the gossip probability
-					gossipProbability -= 1/((ClusterAdministrationImpl)nodeManagement.getConnectionManager().
+					gossipProbability = gossipProbability - 1/((ClusterAdministrationImpl)nodeManagement.getConnectionManager().
 							getClusterAdmimnistration()).getGroupNodes().size();
 					logger.debug("Gossip probability lowered to " + gossipProbability);
 				} else {
 					// set the synchronization time of the node
 					long timeStamp = new DateTime().getMillis();
-					if(synchronizationTime.contains(nodeId)){
+					if(synchronizationTime.containsKey(nodeId)){
 						synchronizationTime.replace(nodeId, timeStamp);
 					} else {
 						synchronizationTime.put(nodeId, timeStamp);
@@ -143,7 +143,7 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		LinkedBlockingQueue<Message> newMessages = new LinkedBlockingQueue<Message>();
 		
 		for(MessageContainer messageContainer : broadcastedMessagesQueue){
-			if(!synchronizationTime.contains(remoteNodeId) || 
+			if(!synchronizationTime.containsKey(remoteNodeId) || 
 					synchronizationTime.get(remoteNodeId) < messageContainer.getTimeStamp()){
 				newMessages.add(messageContainer.getMessage());
 				logger.debug("Message [" + messageContainer.getMessage() + "] added to the new messages to send");
@@ -152,10 +152,12 @@ public class MessageManager implements ClusterCommunication, MessageListener{
 		
 		// set the synchronization time of the node
 		long timeStamp = new DateTime().getMillis();
-		if(synchronizationTime.contains(remoteNodeId)){
+		if(synchronizationTime.containsKey(remoteNodeId)){
 			synchronizationTime.replace(remoteNodeId, timeStamp);
+			logger.debug("Synchronization time replaced by new one");
 		} else {
 			synchronizationTime.put(remoteNodeId, timeStamp);
+			logger.debug("Synchronization time setted by first time");
 		}
 		logger.debug("Node [" + remoteNodeId + "] synchronized at [" + timeStamp + "]");
 		

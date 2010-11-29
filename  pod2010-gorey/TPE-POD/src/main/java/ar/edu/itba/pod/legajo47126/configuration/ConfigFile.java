@@ -91,5 +91,10 @@ public class ConfigFile {
 		
 		return Boolean.valueOf(property);
 	}
+	
+	@Override
+	public String toString() {
+		return configFile.toString();
+	}
 
 }
