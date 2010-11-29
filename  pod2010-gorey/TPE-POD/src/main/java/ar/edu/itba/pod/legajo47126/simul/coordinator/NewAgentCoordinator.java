@@ -48,8 +48,8 @@ public class NewAgentCoordinator implements Runnable{
 		
 		// broadcast a message saying that the local node is the new coordinator
 		logger.debug("Start coordinating, inform all the others");
-		Message message = MessageFactory.NodeAgentLoadRequestMessage(nodeManagement.getLocalNode().getNodeId());
 		try {
+			Message message = MessageFactory.NodeAgentLoadRequestMessage(nodeManagement.getLocalNode().getNodeId());
 			nodeManagement.getConnectionManager().getGroupCommunication().broadcast(message);
 		} catch (RemoteException e) {
 			logger.error("There was an error during the coordination broadcast");

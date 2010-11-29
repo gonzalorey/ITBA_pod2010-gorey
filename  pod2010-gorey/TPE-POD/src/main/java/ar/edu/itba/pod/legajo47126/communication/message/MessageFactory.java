@@ -1,5 +1,7 @@
 package ar.edu.itba.pod.legajo47126.communication.message;
 
+import java.rmi.RemoteException;
+
 import org.joda.time.DateTime;
 
 import ar.edu.itba.pod.legajo47126.communication.paylod.DisconnectPayloadImpl;
@@ -67,8 +69,9 @@ public class MessageFactory {
 	 * Creates a NODE_AGENT_LOAD_REQUEST message. This message is sent by a coordinator in order to know node agent load
 	 * 
 	 * @return a message containing the local node as sender, the current timestamp, and the propper payload
+	 * @throws RemoteException 
 	 */
-	public static Message NodeAgentLoadRequestMessage(String nodeId){
+	public static Message NodeAgentLoadRequestMessage(String nodeId) throws RemoteException{
 		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.NODE_AGENTS_LOAD_REQUEST, new NodeAgentLoadRequestPayloadImpl());
 	}

@@ -16,33 +16,21 @@ public class ObjectFactoryAlternativeMain {
 	
 	public static void main(String[] args) {
 		try {
+			//apply default policy with one permission
+			System.setProperty("java.security.policy","file.policy");
+			
+			try {
+				//Setting security manager
+				SecurityManager sm = new SecurityManager();
+				System.setSecurityManager(sm);
+			} catch (SecurityException e) {
+				System.err.println("Error: could not set security manager: " + e);
+			}
+			
 			ObjectFactoryAlternative ofa = new ObjectFactoryAlternativeImpl(args);
 			
 			new NodeConsole().runConsole(ofa);
-//			
-//			ofa.getMarketManager().start();
-//			ofa.getSimulationManager().register(Market.class, ofa.getMarketManager().market());
-//			
-//			Agent mine1 = AgentFactory.createSimpleProducer(SimpleProducers.PIG_IRON_MINE);
-//			Agent mine2 = AgentFactory.createSimpleProducer(SimpleProducers.COPPER_MINE);
-//			Agent factory = AgentFactory.createSimpleConsumer(SimpleConsumers.FACTORY);
-//			Agent refinery = AgentFactory.createConsumerProducer(ConsumersProducers.STEEL_REFINERY);
-//			
-//			ofa.getSimulationManager().addAgent(mine1);
-//			ofa.getSimulationManager().addAgent(mine2);
-//			ofa.getSimulationManager().addAgent(factory);
-//			ofa.getSimulationManager().addAgent(refinery);
-//			
-//			ofa.getSimulationManager().start();
-//			try {
-//				Thread.sleep(1000 * 20);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//			ofa.getSimulationManager().shutdown();
-//			
-//			ofa.getMarketManager().shutdown();
-//			
+
 			logger.warn("Calling a local method (cast needed)");
 			((ObjectFactoryAlternativeImpl) ofa).closeObject();
 			
