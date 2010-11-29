@@ -101,7 +101,7 @@ public class DistributedMarket extends LocalMarket {
 						buying.remove(buyer, transfer);
 						continue;
 					}
-//					logTransfer(seller, buyer, transfer);
+					logTransferRemote(seller, buyer, transfer);
 					
 					return transfer;
 				}
@@ -112,6 +112,15 @@ public class DistributedMarket extends LocalMarket {
 			}
 			// Reaching here mean we hit a race condition. Try again.
 		}
+	}
+	
+	public void logTransferRemote(Resource from, ResourceStock to, int amount) {
+		transactionCount++;
+		createhistoryRemote(from, to, amount);		
+	}
+	
+	protected void createhistoryRemote(Resource resource, ResourceStock to, int amount) {
+		createHistory(resource.name(), to.name(), resource, amount);
 	}
 	
 	public void addToRemotelySelling(Resource resource, int amount){
@@ -136,11 +145,14 @@ public class DistributedMarket extends LocalMarket {
 	
 	public int getLocalStock(Resource resource, int amount){
 		int localStock = 0;
-		for(ResourceStock seller : selling){
+		logger.info("Looking for an amount of [" + amount + "] of resource [" + resource + "]");
+		for(ResourceStock seller : selling.elementSet()){
+			logger.info("An amount of [" + selling.count(seller) + "] of resource [" + seller.resource() + "]");
 			if(seller.resource().equals(resource)){
 				localStock = selling.count(seller);
 				if(amount < localStock)
 					localStock = amount;
+				logger.info("Found local stock of [" + localStock + "]");
 				break;
 			}
 		}

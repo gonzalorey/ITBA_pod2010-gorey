@@ -51,6 +51,8 @@
 					<archive>
 						<manifest>
 							<mainClass>ar.edu.itba.pod.legajo47126.simul.ObjectFactoryAlternativeMain</mainClass>
+							<!-- <mainClass>ar.edu.itba.pod.legajo47126.simulation.loadtest.SingleNode</mainClass> -->
+							<!-- <mainClass>ar.edu.itba.pod.legajo47126.simulation.loadtest.ConnectToSingleNode</mainClass> -->
 						</manifest>
 					</archive>
 				</configuration>
