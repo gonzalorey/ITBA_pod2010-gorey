@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 import ar.edu.itba.pod.legajo47126.communication.ClusterAdministrationImpl;
 import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.communication.message.MessageFactory;
+import ar.edu.itba.pod.legajo47126.simul.ObjectFactoryAlternativeImpl;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.DisconnectionCoordinator;
 import ar.edu.itba.pod.legajo47126.simul.coordinator.NewNodeCoordinator;
 import ar.edu.itba.pod.legajo47126.simulation.AgentFactory;
@@ -25,6 +26,7 @@ import ar.edu.itba.pod.legajo47126.simulation.SimulationManagerImpl;
 import ar.edu.itba.pod.legajo47126.simulation.AgentFactory.ConsumersProducers;
 import ar.edu.itba.pod.legajo47126.simulation.AgentFactory.SimpleConsumers;
 import ar.edu.itba.pod.legajo47126.simulation.AgentFactory.SimpleProducers;
+import ar.edu.itba.pod.legajo47126.simulation.statistics.GetStatistics;
 import ar.edu.itba.pod.simul.ObjectFactoryAlternative;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.market.Market;
@@ -55,6 +57,8 @@ public class NodeConsole {
 	private Option shutdownsimulation;
 	private Option startmarket;
 	private Option shutdownmarket;
+	
+	private Option getstatistics;
 
 	private Option help;
 	private Option exit;
@@ -99,6 +103,8 @@ public class NodeConsole {
 		startmarket = new Option("startmarket", "Starts the market and registers it in the simulation");
 		
 		shutdownmarket = new Option("shutdownmarket", "Shuts down the market");
+		
+		getstatistics = new Option("getstatistics", "Get the statistics");
 		
 		getknownnodes = new Option("getknownnodes", "Lists the known nodes");
 		
@@ -159,6 +165,8 @@ public class NodeConsole {
 		options.addOption(startsimulation);
 
 		options.addOption(shutdownsimulation);
+		
+		options.addOption(getstatistics);
 		
 		options.addOption(startmarket);
 		options.addOption(shutdownmarket);
@@ -468,7 +476,13 @@ public class NodeConsole {
 					} catch (Exception e) {
 						logger.error("There was an error during the creation of the agent", e);
 					}
-				} else if(cmd.hasOption(getload.getOpt())){
+				} else if(cmd.hasOption(getstatistics.getOpt())){
+					logger.info("Getting the statistics...");
+					System.out.println("Getting the statistics...");
+					new GetStatistics(((ObjectFactoryAlternativeImpl) ofa).getNodeManagement()).run();
+					logger.info("Statistics successfully obtained");
+					System.out.println("Statistics successfully obtained");
+				}else if(cmd.hasOption(getload.getOpt())){
 					logger.info("Getting the node agents load... [WARNING: CAST TO LOCAL CLASS NEEDED]");
 					try{
 						int load = ((SimulationManagerImpl) ofa.getSimulationManager()).getAgentsLoad();

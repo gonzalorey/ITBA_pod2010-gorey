@@ -35,6 +35,15 @@ public class MessageRequester implements Runnable{
 		
 		while(!nodeManagement.shouldExit()){
 			try {
+				while((nodeManagement.getConnectionManager()) == null){
+					// crapiest thing ever...
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e1) {
+						logger.error("Error while sleeping...", e1);
+					}
+				}
+				
 				CopyOnWriteArraySet<String> groupNodes = ((ClusterAdministrationImpl)nodeManagement.
 						getConnectionManager().getClusterAdmimnistration()).getGroupNodes();
 				
