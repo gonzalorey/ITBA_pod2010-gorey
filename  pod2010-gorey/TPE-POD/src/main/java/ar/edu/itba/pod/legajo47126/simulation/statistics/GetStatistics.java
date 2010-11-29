@@ -48,6 +48,6 @@ public class GetStatistics implements Runnable {
 			logger.error("There was an error while waiting for the messages to arrive", e);
 		}
 		
-		Statistics.getInstance().printOnScreen();
+		Statistics.getInstance().saveToFile();
 	}
 }

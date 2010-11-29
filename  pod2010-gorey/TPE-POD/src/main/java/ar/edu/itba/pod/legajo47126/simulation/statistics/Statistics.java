@@ -1,16 +1,15 @@
 package ar.edu.itba.pod.legajo47126.simulation.statistics;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.log4j.Logger;
 
 import ar.edu.itba.pod.simul.communication.TransferHistory;
 
 public class Statistics {
+	
+	// instance of the log4j logger
+	private static Logger logger = Logger.getLogger(Statistics.class);
 	
 	private static Statistics statistics;
 	
@@ -45,25 +44,8 @@ public class Statistics {
 	}
 	
 	public void saveToFile(){
-		
-		String pathname = "Statistics.txt";
-		File file = new File(pathname);
-		FileOutputStream fos;
-		try {
-			fos = new FileOutputStream(file);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return;
-		}
-		OutputStreamWriter osw = new OutputStreamWriter(fos);
-		BufferedWriter bw = new BufferedWriter(osw);
-		
 		for(String nodeId : statisticsMap.keySet()){
-			try {
-				bw.write("Node [" + nodeId + "] had [" + statisticsMap.get(nodeId) + "] trans/sec");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			logger.fatal("[STATISTICS] Node [" + nodeId + "] had [" + statisticsMap.get(nodeId) + "] trans/sec");
 		}
 	}
 }
