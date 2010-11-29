@@ -9,7 +9,7 @@ import ar.edu.itba.pod.legajo47126.market.DistributedMarket;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.legajo47126.simulation.SimulationCommunicationImpl;
 import ar.edu.itba.pod.legajo47126.simulation.SimulationManagerImpl;
-import ar.edu.itba.pod.legajo47126.simulation.Statistics;
+import ar.edu.itba.pod.legajo47126.simulation.statistics.Statistics;
 import ar.edu.itba.pod.simul.communication.Message;
 import ar.edu.itba.pod.simul.communication.payload.DisconnectPayload;
 import ar.edu.itba.pod.simul.communication.payload.NodeAgentLoadPayload;
@@ -202,13 +202,14 @@ public class MessageProcessor implements Runnable {
 	
 	private void doNodeMarketData(MessageContainer messageContainer) {
 		NodeMarketDataPayload payload = (NodeMarketDataPayload) messageContainer.getMessage().getPayload();
-		Statistics.setStatistics(messageContainer.getMessage().getNodeId(), payload.getMarketData().getHistory());
+		Statistics.getInstance().addStatistics(messageContainer.getMessage().getNodeId(), payload.getMarketData().getHistory());
 	}
 	
 	private void doNodeMarketDataRequest(MessageContainer messageContainer) {
 		try {
 			logger.debug("Sending a NODE_MARKET_DATA message...");
-			Message message = MessageFactory.NodeMarketDataMessage(nodeManagement.getLocalNode().getNodeId());
+			Message message = MessageFactory.NodeMarketDataMessage(nodeManagement.getLocalNode().getNodeId(), 
+					nodeManagement.getMarketManager().market().marketData());
 			nodeManagement.getConnectionManager().getGroupCommunication().send(message, messageContainer.getMessage().getNodeId());
 		} catch (RemoteException e) {
 			logger.error("The message couldn't be sent");

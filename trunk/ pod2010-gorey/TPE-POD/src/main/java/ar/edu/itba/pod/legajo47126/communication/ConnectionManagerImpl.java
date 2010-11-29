@@ -57,11 +57,6 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		
 		this.nodeManagement = nodeManagement;
 		
-		// instance the MessageManager
-		messageManager = new MessageManager(nodeManagement);
-		messageManager.startMessageProcessing();
-		logger.debug("Message Manager initialized");
-		
 		// instance the ClusterAdministration
 		clusterAdministration = new ClusterAdministrationImpl(nodeManagement);
 		logger.debug("Connection Administration initialized");
@@ -75,7 +70,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 		
 		// start the RMI Registry
 		registry = startRMIRegistry();
-		
+				
 		// publish the Connection Manager
 		try {
 			registry.bind(CONNECTION_MANAGER_NAME, this);
@@ -90,6 +85,11 @@ public class ConnectionManagerImpl implements ConnectionManager, ReferenceName, 
 			logger.error("The object is already bounded");
 			e.printStackTrace();
 		}
+		
+		// instance the MessageManager
+		messageManager = new MessageManager(nodeManagement);
+		messageManager.startMessageProcessing();
+		logger.debug("Message Manager initialized");
 		
 	}
 	

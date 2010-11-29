@@ -73,9 +73,7 @@ public class MessageFactory {
 				MessageType.NODE_AGENTS_LOAD_REQUEST, new NodeAgentLoadRequestPayloadImpl());
 	}
 	
-	public static Message NodeMarketDataMessage(String nodeId){
-		MarketData marketData = null;	//TODO get the propper market data
-		
+	public static Message NodeMarketDataMessage(String nodeId, MarketData marketData){
 		return new Message(nodeId, new DateTime().getMillis(), 
 				MessageType.NODE_MARKET_DATA, new NodeMarketDataPayloadImpl(marketData));
 	}
