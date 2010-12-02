@@ -16,16 +16,13 @@ public class ObjectFactoryAlternativeMain {
 	
 	public static void main(String[] args) {
 		try {
-			//apply default policy with one permission
-			System.setProperty("java.security.policy","file.policy");
-			
-			try {
-				//Setting security manager
-				SecurityManager sm = new SecurityManager();
-				System.setSecurityManager(sm);
-			} catch (SecurityException e) {
-				System.err.println("Error: could not set security manager: " + e);
-			}
+//			try {
+//				//Setting security manager
+//				SecurityManager sm = new SecurityManager();
+//				System.setSecurityManager(sm);
+//			} catch (SecurityException e) {
+//				System.err.println("Error: could not set security manager: " + e);
+//			}
 			
 			ObjectFactoryAlternative ofa = new ObjectFactoryAlternativeImpl(args);
 			

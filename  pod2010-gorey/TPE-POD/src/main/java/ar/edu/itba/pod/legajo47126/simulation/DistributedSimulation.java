@@ -6,6 +6,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Logger;
+
 import ar.edu.itba.pod.simul.simulation.Agent;
 import ar.edu.itba.pod.simul.simulation.Simulation;
 import ar.edu.itba.pod.simul.simulation.SimulationEvent;
@@ -26,7 +28,7 @@ import com.google.common.collect.Maps;
 public class DistributedSimulation implements Simulation, SimulationInspector{
 	
 	// instance of the log4j logger
-	//private static Logger logger = Logger.getLogger(SimulationManagerImpl.class);
+	private static Logger logger = Logger.getLogger(SimulationManagerImpl.class);
 
 	// Maybe the agents should be in the Simulation
 	private ConcurrentLinkedQueue<Agent> localAgents;
@@ -90,8 +92,10 @@ public class DistributedSimulation implements Simulation, SimulationInspector{
 		localAgents.add(agent);
 		agent.onBind(this);
 		
-		if(simulationManager.isStarted())
+		if(simulationManager.isStarted()){
 			agent.start();
+			logger.debug("Agent started");
+		}
 	}
 	
 	public void removeAgent(Agent agent) {
