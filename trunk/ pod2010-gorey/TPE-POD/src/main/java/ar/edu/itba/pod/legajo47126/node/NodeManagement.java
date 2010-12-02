@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 import ar.edu.itba.pod.legajo47126.communication.ConnectionManagerImpl;
 import ar.edu.itba.pod.legajo47126.configuration.ConfigFile;
@@ -37,6 +38,7 @@ public class NodeManagement {
 	private boolean shouldExit;
 	
 	public NodeManagement(String[] args) throws UnknownHostException, IOException, RemoteException {
+		PropertyConfigurator.configure("log4j/log4j.properties");
 		
 		if(args.length == 1)
 			localNode = new Node(args[0], this);
