@@ -28,6 +28,7 @@ import com.google.common.collect.Maps;
 public class DistributedSimulation implements Simulation, SimulationInspector{
 	
 	// instance of the log4j logger
+	@SuppressWarnings("unused")
 	private static Logger logger = Logger.getLogger(SimulationManagerImpl.class);
 
 	// Maybe the agents should be in the Simulation
@@ -39,6 +40,7 @@ public class DistributedSimulation implements Simulation, SimulationInspector{
 	
 	private final Map<Class<?>, Object> env = Maps.newHashMap();
 	
+	@SuppressWarnings("unused")
 	private SimulationManagerImpl simulationManager;
 	
 	public DistributedSimulation(TimeMapper timeMapper, SimulationManagerImpl simulationManagerImpl) {
@@ -92,10 +94,10 @@ public class DistributedSimulation implements Simulation, SimulationInspector{
 		localAgents.add(agent);
 		agent.onBind(this);
 		
-		if(simulationManager.isStarted()){
-			agent.start();
-			logger.debug("Agent started");
-		}
+//		if(simulationManager.isStarted()){
+//			agent.start();
+//			logger.debug("Agent started");
+//		}
 	}
 	
 	public void removeAgent(Agent agent) {
