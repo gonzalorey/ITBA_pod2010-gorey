@@ -82,6 +82,8 @@ public class ObjectFactoryAlternativeImpl implements ObjectFactoryAlternative {
 			// clears the group data
 			((ClusterAdministrationImpl)nodeManagement.getConnectionManager().getClusterAdmimnistration()).clearGroup();
 			
+			System.out.println("Disconnected from group successfully");
+			
 		} catch (RemoteException e) {
 			logger.error("There was an error during the disconnection of the node");
 			logger.error("Error message:" + e.getMessage());
