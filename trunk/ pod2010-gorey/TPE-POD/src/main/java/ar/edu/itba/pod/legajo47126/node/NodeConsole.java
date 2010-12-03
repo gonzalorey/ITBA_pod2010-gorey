@@ -354,6 +354,7 @@ public class NodeConsole {
 					}
 				} else if(cmd.hasOption(disconnect.getOpt())){
 					logger.info("Disconnecting from group...");
+					System.out.println("Disconnecting from group");
 					try{
 						ofa.disconnect();
 					} catch (Exception e) {
@@ -528,9 +529,6 @@ public class NodeConsole {
 					helpFormatter.printHelp("-command_name [args]", options);
 				} else if(cmd.hasOption(exit.getOpt())){
 					logger.info("Exiting...");
-					if(((SimulationManagerImpl) ofa.getSimulationManager()).isStarted())
-						ofa.getSimulationManager().shutdown();
-					ofa.getMarketManager().shutdown();
 					break;
 				} else{
 					logger.info("Wrong command, type -help for more information");

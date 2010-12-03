@@ -5,12 +5,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
+import ar.edu.itba.pod.legajo47126.communication.ClusterAdministrationImpl;
 import ar.edu.itba.pod.legajo47126.market.DistributedMarket;
 import ar.edu.itba.pod.legajo47126.node.NodeManagement;
 import ar.edu.itba.pod.legajo47126.simulation.SimulationCommunicationImpl;
 import ar.edu.itba.pod.legajo47126.simulation.SimulationManagerImpl;
 import ar.edu.itba.pod.legajo47126.simulation.statistics.Statistics;
 import ar.edu.itba.pod.simul.communication.Message;
+import ar.edu.itba.pod.simul.communication.MessageType;
 import ar.edu.itba.pod.simul.communication.payload.DisconnectPayload;
 import ar.edu.itba.pod.simul.communication.payload.NodeAgentLoadPayload;
 import ar.edu.itba.pod.simul.communication.payload.NodeMarketDataPayload;
@@ -105,10 +107,30 @@ public class MessageProcessor implements Runnable {
 					
 					logger.debug("Message successfully processed");
 					
+					// takes the local node from the list if it were to exist...
+					((ClusterAdministrationImpl)nodeManagement.getConnectionManager().
+							getClusterAdmimnistration()).getGroupNodes().remove(nodeManagement.getLocalNode().getNodeId());
+					
+					// if there are no other nodes, and it wasn't a message from the disconnecting node, add it
+					if(((ClusterAdministrationImpl)nodeManagement.getConnectionManager().
+							getClusterAdmimnistration()).getGroupNodes().size() == 0){
+						if(messageContainer.getMessage().getType() == MessageType.DISCONNECT){
+							DisconnectPayload payload = (DisconnectPayload) messageContainer.getMessage().getPayload();
+							if(!payload.getDisconnectedNodeId().equals(messageContainer.getMessage().getNodeId())){
+								((ClusterAdministrationImpl)nodeManagement.getConnectionManager().
+										getClusterAdmimnistration()).getGroupNodes().add(messageContainer.getMessage().getNodeId());
+							}
+						} else {
+							((ClusterAdministrationImpl)nodeManagement.getConnectionManager().
+							getClusterAdmimnistration()).getGroupNodes().add(messageContainer.getMessage().getNodeId());
+						}
+							
+					}
+					
 					// remove the message from the queue (it may not be the FIRT anymore)
 					messagesQueue.remove(messageContainer);
 					messageContainer = null;
-						
+					
 				} else {
 					
 					// if no message was waiting to be processed, sleep for a while
