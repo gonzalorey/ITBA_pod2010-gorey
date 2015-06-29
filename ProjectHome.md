@@ -1,0 +1,1 @@
+Construir una simulación distribuida basada en agentes, con capacidad de crecer dinámicamente en computadoras utilizadas, y observar un comportamiento tolerante a fallas.
